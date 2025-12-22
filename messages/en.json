@@ -1,0 +1,448 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "view": "View"
+  },
+  "loading-dashboard": "Loading dashboard...",
+  "navigation": {
+    "dashboard": "Dashboard",
+   
+    "settings": "Settings",
+    "profile": "Profile",
+   
+    "records": "Records",
+    "logout": "Logout",
+    "users": "Users",
+    "appointments": "Appointments",
+    "analytics": "Analytics",
+    "admin": "Admin Dashboard"
+  },
+   "form": {
+    
+ 
+    "form-email": "E-mail",
+    "form-email-placeholder": "Enter Email",
+    "form-password": "Password",
+    "form-password-placeholder": "Enter your password",
+    "form-new-password": "New Password",
+    "form-new-password-label": "New Password",
+    "form-confirm-password": "Confirm Password",
+    "form-confirm-password-label": "Confirm Password",
+    "form-name": "Name",
+    "form-name-placeholder": "Enter your name",
+    "form-first-name": "First Name",
+    "form-first-name-placeholder": "Enter your first name",
+    "form-last-name": "Last Name",
+    "form-last-name-placeholder": "Enter your last name",
+    "form-confirm-password-placeholder": "Confirm your password"
+  },
+  "auth": {
+    "auth-remember-me": "remember me",
+    "auth-forgot-password": "Forgot Password?",
+    "auth-dont-have-account": "Don't Have Account ?",
+    "auth-sign-up": "Sign-Up",
+    "auth-sign-in": "Sign-In",
+    "auth-reset-password": "Reset Password",
+    "auth-dont-want-to-reset": "You don't want to reset?",
+    "auth-reset-password-label": "Reset Password",
+    "auth-remember-password": "You remember your password?"
+  },
+
+ 
+ 
+  
+   
+ 
+   
+  
+    
+  
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure your application preferences",
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage how you receive notifications",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive notifications via email",
+      "pushNotifications": "Push Notifications",
+      "pushNotificationsDesc": "Receive push notifications in browser",
+      "weeklyReports": "Weekly Reports",
+      "weeklyReportsDesc": "Receive weekly activity summaries"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Customize the look and feel of the application",
+      "darkMode": "Dark Mode",
+      "darkModeDesc": "Switch to dark theme",
+      "compactView": "Compact View",
+      "compactViewDesc": "Use a more compact layout"
+    },
+    "security": {
+      "title": "Security",
+      "description": "Manage your account security settings",
+      "changePassword": "Change Password",
+      "twoFactorAuth": "Two-Factor Authentication",
+      "loginSessions": "Login Sessions"
+    },
+    "language": {
+      "title": "Language & Region",
+      "description": "Set your language and regional preferences",
+      "language": "Language",
+      "languageDesc": "English (US)",
+      "timezone": "Timezone",
+      "timezoneDesc": "UTC-5 (Eastern Time)",
+      "change": "Change",
+      "english": "English (US)",
+      "french": "Français (FR)",
+      "spanish": "Español (ES)",
+      "arabic": "العربية (MA)"
+    },
+    "account": {
+      "title": "Account Actions",
+      "description": "Manage your account",
+      "exportData": "Export Data",
+      "deleteAccount": "Delete Account",
+      "exporting": "Exporting...",
+      "deleting": "Deleting...",
+      "confirmDelete": "Confirm Delete Account",
+      "confirmDeleteDesc": "Are you sure you want to delete your account? This action cannot be undone."
+    },
+    "messages": {
+      "settingEnabled": "{{setting}} enabled",
+      "settingDisabled": "{{setting}} disabled",
+      "languageChanged": "Language changed to {{language}}",
+      "timezoneChanged": "Timezone changed to {{timezone}}",
+      "exportSuccess": "Data export initiated. Download should start shortly.",
+      "deleteSuccess": "Account deletion request submitted. You will be logged out.",
+      "saveError": "Failed to save {{setting}} setting",
+      "exportError": "Failed to export data",
+      "deleteError": "Failed to delete account"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account settings and preferences",
+    "sections": {
+      "profileInfo": "Profile Information",
+      "profileInfoDesc": "Your personal information and account details",
+      "quickActions": "Quick Actions",
+      "quickActionsDesc": "Common tasks and settings"
+    },
+    "labels": {
+      "email": "Email",
+      "memberSince": "Member since",
+      "editProfile": "Edit Profile",
+      "editProfileDesc": "Update your personal information",
+      "changePassword": "Change Password",
+      "changePasswordDesc": "Update your account password",
+      "notificationSettings": "Notification Settings",
+      "notificationSettingsDesc": "Manage email preferences"
+    },
+    "mockData": {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "role": "Administrator",
+      "joinDate": "January 2024"
+    }
+  },
+
+ 
+ 
+  "sign-up": {
+    "success": "Account created successfully! Please check your email to verify your account.",
+    "failed": "Failed to create account. Please try again.",
+    "create-account": "Create Account",
+    "already-have-account": "Already have an account?",
+    "sign-in": "Sign In",
+    "account-exists": "Account Already Exists",
+    "account-exists-desc": "An account with this email address already exists. Would you like to sign in instead?",
+    "cancel": "Cancel"
+  },
+  "sign-in": {
+    "title": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "forgot-password": "Forgot Password?",
+    "sign-in": "Sign In"
+  },
+  "reset-password": {
+    "title": "Reset Password",
+    "email": "Email",
+    "send-reset-link": "Send Reset Link",
+    "back-to-sign-in": "Back to Sign In"
+  },
+  "forgot-password": {
+    "title": "Forgot Password?",
+    "email": "Email",
+    "send-reset-link": "Send Reset Link",
+    "back-to-sign-in": "Back to Sign In"
+  },
+  "verify-email": {
+    "title": "Verify Your Email",
+    "description": "We have sent a verification link to your email. Please check your inbox and click the link to confirm your account.",
+    "resend-link": "Resend Link",
+    "back-to-sign-in": "Back to Sign In"
+  },
+  "change-password": {
+    "title": "Change Password",
+    "current-password": "Current Password",
+    "new-password": "New Password",
+    "confirm-password": "Confirm Password",
+    "change-password": "Change Password"
+  },
+
+   "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "no-show": "No Show",
+      "cancelled": "Cancelled"
+    },
+  
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "Manage users and monitor system activity",
+    "dashboard": "Admin Dashboard",
+    "manage-users": "Manage users and their submissions",
+    "approved-therapists": "Approved Therapists",
+    "total-appointments": "Total Appointments",
+    "pending-approvals": "Pending Approvals",
+    "awaiting-review": "Awaiting review",
+    "all-users": "All users",
+    "all-time": "All time",
+    "all-appointments": "All Appointments",
+    "manage-appointments": "View and manage all system appointments",
+    "analytics-title": "Analytics Dashboard",
+    "analytics-desc": "Department statistics and insights",
+    "coming-soon": "Analytics dashboard coming soon...",
+    "pending": {
+      "title": "Account Pending Approval",
+      "description": "Your registration is being reviewed by an administrator",
+      "what-next": "What happens next?",
+      "step-1": "An administrator will review your professional credentials",
+      "step-2": "You'll receive an email notification once your account is approved",
+      "step-3": "This page will automatically update when your status changes",
+      "license": "License Number",
+      "specialization": "Specialization",
+      "sign-out": "Sign Out"
+    },
+    "loading": "Loading...",
+    "loading-dashboard": "Loading dashboard...",
+    "appointments": {
+      "back": "Back",
+      "new-appointment": "New Appointment",
+      "step-indicator": "Step {step} of 4: {title}",
+      "steps": {
+        "patient-selection": "Patient Selection",
+        "appointment-details": "Appointment Details",
+        "room-availability": "Room & Availability",
+        "confirmation": "Confirmation"
+      },
+      "search-patient": "Search Patient",
+      "search-placeholder": "Search by name, phone, or medical record number",
+      "select-patient": "Select Patient",
+      "mr-number": "MR#",
+      "cancel": "Cancel",
+      "add-new-patient": "Add New Patient",
+      "create-patient": "Create Patient",
+      "selected-patient": "Selected Patient",
+      "date": "Date",
+      "time": "Time",
+      "appointment-type": "Appointment Type",
+      "duration-min": "Duration (minutes)",
+      "next-room": "Next: Room & Availability",
+      "next-confirmation": "Next: Confirmation",
+      "room": "Room",
+
+      "state":"state",
+      "availability-check": "Availability Check",
+      "checking": "Checking...",
+      "check-availability": "Check Availability",
+      "slot-not-available": "Time slot not available",
+      "check-failed": "Failed to check availability",
+      "review-details": "Review Appointment Details",
+      "medical-notes-optional": "Medical Notes (Optional)",
+      "medical-notes-placeholder": "Add any medical notes or special requirements...",
+      "create-appointment": "Create Appointment",
+      "success-create": "Appointment created successfully",
+      "back-dashboard": "Back to Dashboard",
+      "details-title": "Appointment Details",
+      "manage-title": "Manage Appointment",
+      "manage-desc": "Update status and clinical notes",
+      "select-status": "Select status",
+      "cancel-warning": "Cancelling will automatically trigger the waiting list replacement if applicable.",
+      "enter-notes": "Enter clinical observations, progress notes, or treatment details...",
+      "special-requirements": "Special Requirements",
+      "enter-requirements": "Any special equipment or assistance needed...",
+      "saving": "Saving...",
+      "save-changes": "Save Changes",
+      "update-success": "Appointment updated successfully",
+      "update-failed": "Failed to update appointment",
+      "not-found": "Appointment not found",
+      "patient-created": "Patient created successfully",
+      "failed-create-patient": "Failed to create patient",
+      "failed-check-availability": "Failed to check availability",
+      "please-select-patient": "Please select a patient",
+      "please-check-availability": "Please check availability first",
+      "failed-create-appointment": "Failed to create appointment",
+      "mrn": "Medical Record Number",
+      "dob": "Date of Birth",
+      "first-name": "First Name",
+      "last-name": "Last Name",
+      "phone": "Phone Number",
+      "patient-name": "Patient Name",
+      "time-duration": "Time & Duration",
+      "medical-notes": "Medical Notes",
+      "types": {
+        "initial-assessment": "Initial Assessment (60 min)",
+        "follow-up": "Follow-up (45 min)",
+        "rehabilitation": "Rehabilitation (30 min)",
+        "post-operative": "Post-operative (60 min)"
+      }
+    },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "no-show": "No Show",
+      "cancelled": "Cancelled"
+    },
+    "approve": "Approve",
+    "reject": "Reject",
+    "promote": "Promote to Admin",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "report": "Report",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "patient": "Patient",
+    "therapist": "Therapist",
+    "time": "Time",
+    "export-all-data": "Export All Data",
+    "total-users": "Total Users",
+    "active-users-month": "Active Users (This Month)",
+    "users": "Users",
+    "all-interventions": "All Interventions",
+    "all-reclamations": "All Reclamations",
+    "users-overview": "Users Overview",
+    "no-users-found": "No users found",
+    "no-user-data": "No user data available",
+    "user": "User",
+    "last-activity": "Last Activity",
+    "actions": "Actions",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "never": "Never",
+    "view-details": "View Details",
+    "remove-admin": "Remove Admin",
+    "make-admin": "Make Admin",
+    "loading": "Loading...",
+    "checking-permissions": "Checking permissions...",
+    "access-denied": "Access Denied",
+    "no-permission": "You don't have permission to access the admin dashboard.",
+    "go-dashboard": "Go to Dashboard",
+    "loading-admin-data": "Loading admin data...",
+    "export-success": "Admin export completed successfully!",
+    "export-error": "Failed to export records",
+    "export-failed": "An error occurred during export",
+    "role-update-success": "User role updated successfully",
+    "role-update-error": "Failed to update user role",
+    "role-update-failed": "An error occurred while updating user role",
+    "user-details": "User Details",
+    "email-verified": "Email Verified",
+    "joined": "Joined",
+    "company": "Company",
+    "site": "Site",
+    "start": "Start",
+
+    "created": "Created",
+
+    "type": "Type",
+    "date": "Date",
+    "description": "Description",
+    "and-more": "... and {{count}} more",
+    "delete" : "Delete",
+    "no-records-found": "No records found",
+    "confirm-delete": "Are you sure you want to delete this record?",
+    "delete-success": "Record deleted successfully",
+    "delete-failed": "An error occurred while deleting the record",
+    "delete-error": "Failed to delete record",
+    "confirm-delete-message": "Are you sure you want to delete this record?",
+    "cancel": "Cancel"
+  },
+
+  "table": {
+    "id": "ID",
+    "user": "User",
+    "date": "Date",
+    "actions": "Actions",
+    "type": "Type",
+    "company-station": "Company/Station",
+    "responsible-person": "Responsible Person",
+    "date-range": "Date Range",
+    "site-type": "Site/Type",
+    "team-members": "Team Members",
+    "description": "Description",
+    "photo": "Photo",
+    "recipients": "Recipients",
+    "created-at": "Created At"
+  },
+  "landing": {
+    "hero": {
+      "welcome": "New Patients Welcome",
+      "title": "Restoring Movement,",
+      "subtitle": "Improving Life",
+      "description": "Professional physiotherapy care tailored to your recovery needs. Book your appointment today and start your journey to wellness.",
+      "accessDashboard": "Access Dashboard",
+      "createAccount": "Create Account",
+      "signIn": "Sign In"
+    },
+    "features": {
+      "interventions": {
+        "title": "Manual Therapy",
+        "description": "Expert hands-on treatment to mobilize joints and soft tissues."
+      },
+      "reclamations": {
+        "title": "Rehabilitation",
+        "description": "Personalized exercise programs to restore strength and function."
+      },
+      "reports": {
+        "title": "Progress Tracking",
+        "description": "Detailed reports and monitoring of your recovery journey."
+      }
+    },
+    "footer": {
+      "copyright": "© 2024 H2k Physiotherapy Center. All rights reserved."
+    }
+  },
+  "therapist": {
+    "welcome": "Welcome",
+    "subtitle": "Physiotherapy Appointment Management - Hôpital Hassan II",
+    "todays-appointments": "Today's Appointments",
+    "completed": "Completed",
+    "pending": "Pending",
+    "no-show": "No Show",
+    "total": "Total",
+    "max-per-day": "Max: 12 per day",
+    "all-time": "All time",
+    "new-appointment": "New Appointment",
+    "limit-reached": "Daily limit reached. Use waiting list instead.",
+    "export-success": "Export successful",
+    "export-failed": "Export failed",
+    "daily-schedule": "Daily Appointments Schedule",
+    "slots-booked": "{booked} of {total} slots booked for {date}",
+    "available": "Available",
+    "room": "Room",
+    "min": "min"
+  }
+}

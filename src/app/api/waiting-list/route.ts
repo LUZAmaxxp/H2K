@@ -123,11 +123,11 @@ export async function POST(request: NextRequest) {
     const endOfDay = new Date(appointmentDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const therapistDailyCount = await Appointment.countDocuments({
-      therapistId: userProfile.userId,
-      date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $ne: 'cancelled' }
-    });
+    // const therapistDailyCount = await Appointment.countDocuments({
+    //   therapistId: userProfile.userId,
+    //   date: { $gte: startOfDay, $lte: endOfDay },
+    //   status: { $ne: 'cancelled' }
+    // });
 
     // Get current priority number for this therapist and date
     const existingEntries = await WaitingList.find({

@@ -115,22 +115,22 @@ export async function POST(
     // Check availability
     // Import the availability check utility from the appointments route file
     // Note: ensure the appointments route exports a checkAvailability function or inline the logic here
-    // For now, inline a simple availability check to avoid runtime import issues
-    const checkAvailability = async (therapistId: string, date: Date, time: string) => {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+  //   // For now, inline a simple availability check to avoid runtime import issues
+  //  const checkAvailability = async (therapistId: string, date: Date, time: string) => {
+  //     const startOfDay = new Date(date);
+  //     startOfDay.setHours(0, 0, 0, 0);
+  //     const endOfDay = new Date(date);
+  //     endOfDay.setHours(23, 59, 59, 999);
 
-      const count = await Appointment.countDocuments({
-        therapistId,
-        date: { $gte: startOfDay, $lte: endOfDay },
-        time,
-        status: { $ne: 'cancelled' }
-      });
+  //     const count = await Appointment.countDocuments({
+  //       therapistId,
+  //       date: { $gte: startOfDay, $lte: endOfDay },
+  //       time,
+  //       status: { $ne: 'cancelled' }
+  //     });
 
-      return count === 0;
-    };
+  //     return count === 0;
+  //   };
     // For now, we'll do a simple check
     const appointmentDate = new Date(date);
     const startOfDay = new Date(appointmentDate);

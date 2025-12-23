@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { UserSettings, Appointment, Patient, WaitingList, UserProfile } from '@/lib/models';
+import { UserSettings, Appointment, WaitingList, UserProfile } from '@/lib/models';
 
 export async function POST(request: NextRequest) {
   try {

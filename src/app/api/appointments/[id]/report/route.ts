@@ -42,7 +42,8 @@ export async function GET(
       );
     }
 
-    if (userProfile.role !== 'admin' && appointment.therapistId !== userProfile.userId) {
+    const isAdmin = userProfile.role === 'admin' || userProfile.roles?.includes('admin');
+    if (!isAdmin && appointment.therapistId !== userProfile.userId) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

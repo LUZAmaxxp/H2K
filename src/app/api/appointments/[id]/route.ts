@@ -40,8 +40,9 @@ export async function GET(
       );
     }
 
+    const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
     // Role-based access control
-    if (userProfile.role === 'therapist' && appointment.therapistId !== userProfile.userId) {
+    if (isTherapist && appointment.therapistId !== userProfile.userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -93,8 +94,9 @@ export async function PUT(
       );
     }
 
+    const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
     // Role-based access control
-    if (userProfile.role === 'therapist' && appointment.therapistId !== userProfile.userId) {
+    if (isTherapist && appointment.therapistId !== userProfile.userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -179,8 +181,10 @@ export async function DELETE(
       );
     }
 
+    const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
+    const isAdmin = userProfile.role === 'admin' || userProfile.roles?.includes('admin');
     // Only therapist who owns the appointment or admin can delete
-    if (userProfile.role === 'therapist' && appointment.therapistId !== userProfile.userId) {
+    if (!isAdmin && isTherapist && appointment.therapistId !== userProfile.userId) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

@@ -27,11 +27,18 @@ export default function DashboardPage() {
               return;
             }
 
-            if (profile.role === 'therapist') {
+            const roles: string[] = Array.isArray(profile.roles) ? profile.roles : [];
+            const isTherapist = profile.role === 'therapist' || roles.includes('therapist');
+            const isAdmin = profile.role === 'admin' || roles.includes('admin');
+
+            if (isTherapist && !isAdmin) {
               router.push('/dashboard/therapist');
               return;
-            } else if (profile.role === 'admin') {
+            } else if (isAdmin && !isTherapist) {
               router.push('/dashboard/admin');
+              return;
+            } else if (isTherapist && isAdmin) {
+              router.push('/dashboard/therapist');
               return;
             }
           } else if (profileResponse.status === 404) {

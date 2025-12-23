@@ -31,7 +31,7 @@ async function seedAdmin() {
     console.log('   Collections found:', collections.map(c => c.name).join(', '));
 
     // Admin credentials
-    const adminEmail = 'allouchayman21@gmail.com';
+    const adminEmail = 'ayman.allouch@e-polytechnique.ma';
     const adminPassword = 'Aymanos007';
     const adminName = 'Ayman Allouch';
 

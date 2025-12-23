@@ -24,7 +24,9 @@ export default function SidebarMenu({ activeSection }: SidebarMenuProps) {
           const profileResponse = await fetch('/api/user-profile');
           if (profileResponse.ok) {
             const profile = await profileResponse.json();
-            setIsAdmin(profile.role === 'admin');
+            const roles: string[] = Array.isArray(profile.roles) ? profile.roles : [];
+            const isAdmin = profile.role === 'admin' || roles.includes('admin');
+            setIsAdmin(isAdmin);
           }
         }
       } catch (error) {
@@ -103,16 +105,27 @@ export default function SidebarMenu({ activeSection }: SidebarMenuProps) {
         </button>
 
         {/* Dashboard/Home */}
-        <div
-          className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
-          onClick={() => handleNavigation(isAdmin ? '/dashboard/admin' : '/dashboard/therapist')}
-          title={t('navigation.dashboard')}
-        >
-          <Home className="w-6 h-6 text-white" />
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+            onClick={() => handleNavigation('/dashboard/therapist')}
+            title={t('navigation.dashboard')}
+          >
+            <Home className="w-6 h-6 text-white" />
+          </div>
+          {isAdmin && (
+            <div
+              className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-purple-700 transition-colors"
+              onClick={() => handleNavigation('/dashboard/admin')}
+              title={t('admin.dashboard')}
+            >
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+          )}
         </div>
 
-        {/* Appointments - for everyone (Therapists: New Appointment, Admin: Appointments List) */}
-        {!isAdmin ? (
+        {/* Appointments */}
+        <div className="flex flex-col items-center gap-3">
           <div
             className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-green-700 transition-colors"
             onClick={() => handleNavigation('/appointments/new')}
@@ -120,17 +133,18 @@ export default function SidebarMenu({ activeSection }: SidebarMenuProps) {
           >
             <Calendar className="w-6 h-6 text-white" />
           </div>
-        ) : (
-           <div
-            className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
-              activeSection === 'appointments' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-            onClick={() => handleNavigation('/dashboard/admin?tab=appointments')}
-            title={t('navigation.appointments')}
-          >
-            <Calendar className="w-6 h-6" />
-          </div>
-        )}
+          {isAdmin && (
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+                activeSection === 'appointments' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+              onClick={() => handleNavigation('/dashboard/admin?tab=appointments')}
+              title={t('navigation.appointments')}
+            >
+              <Calendar className="w-6 h-6" />
+            </div>
+          )}
+        </div>
 
         {/* Admin Icons */}
         {isAdmin && (

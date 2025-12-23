@@ -27,12 +27,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let query: any = {};
+    const query: Record<string, unknown> = {};
 
+    const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
+    const isAdmin = userProfile.role === 'admin' || userProfile.roles?.includes('admin');
     // Role-based filtering
-    if (userProfile.role === 'therapist') {
+    if (isTherapist) {
       query.therapistId = userProfile.userId;
-    } else if (userProfile.role === 'admin') {
+    } else if (isAdmin) {
       // Admins can see all waiting list entries
       const therapistId = new URL(request.url).searchParams.get('therapistId');
       if (therapistId) {
@@ -71,7 +73,8 @@ export async function POST(request: NextRequest) {
     }
 
     const userProfile = await UserProfile.findOne({ userId: session.user.id });
-    if (!userProfile || userProfile.role !== 'therapist') {
+    const isTherapist = !!userProfile && (userProfile.role === 'therapist' || userProfile.roles?.includes('therapist'));
+    if (!userProfile || !isTherapist) {
       return NextResponse.json(
         { error: 'Only therapists can add to waiting list' },
         { status: 403 }

@@ -18,6 +18,11 @@ const UserProfileSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  roles: {
+    type: [String],
+    enum: ['therapist', 'admin'],
+    default: ['therapist']
+  },
   role: {
     type: String,
     required: true,
@@ -395,6 +400,7 @@ export interface IUserProfile {
   _id: string;
   userId: string;
   email: string;
+  roles?: Array<'therapist' | 'admin'>;
   role: 'therapist' | 'admin';
   status: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
   firstName: string;

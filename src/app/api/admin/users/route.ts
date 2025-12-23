@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { UserProfile, Appointment, AuditLog } from '@/lib/models';
+import { UserProfile, Appointment, AuditLog, IUserProfile } from '@/lib/models';
 
 // GET /api/admin/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
     }
 
     const userProfile = await UserProfile.findOne({ userId: session.user.id });
-    if (!userProfile || userProfile.role !== 'admin') {
+    const isAdmin = !!userProfile && (userProfile.role === 'admin' || userProfile.roles?.includes('admin'));
+    if (!userProfile || !isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -71,7 +72,8 @@ export async function PUT(request: NextRequest) {
     }
 
     const adminProfile = await UserProfile.findOne({ userId: session.user.id });
-    if (!adminProfile || adminProfile.role !== 'admin') {
+    const isAdmin = !!adminProfile && (adminProfile.role === 'admin' || adminProfile.roles?.includes('admin'));
+    if (!adminProfile || !isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -79,7 +81,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, action, status } = body; // action: 'approve', 'reject', 'promote', 'demote', 'activate', 'deactivate'
+    const { userId, action } = body; // action: 'approve', 'reject', 'promote', 'demote', 'activate', 'deactivate'
 
     if (!userId || !action) {
       return NextResponse.json(
@@ -88,7 +90,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const targetUser = await UserProfile.findOne({ userId });
+    const targetUser = await UserProfile.findOne({ userId }) as unknown as IUserProfile & { roles?: Array<'therapist' | 'admin'> };
     if (!targetUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -106,6 +108,7 @@ export async function PUT(request: NextRequest) {
 
     const oldStatus = targetUser.status;
     const oldRole = targetUser.role;
+    const oldRoles: Array<'therapist' | 'admin'> = Array.isArray(targetUser.roles) ? [...targetUser.roles] : [];
 
     // Handle different actions
     switch (action) {
@@ -120,8 +123,10 @@ export async function PUT(request: NextRequest) {
         }
         break;
       case 'promote':
-        if (targetUser.role === 'therapist') {
-          targetUser.role = 'admin';
+        if (targetUser.role === 'therapist' || oldRoles.includes('therapist')) {
+          const roles = new Set<'therapist' | 'admin'>(oldRoles.length ? oldRoles : [targetUser.role]);
+          roles.add('admin');
+          targetUser.roles = Array.from(roles);
           targetUser.status = 'active';
         } else {
           return NextResponse.json(
@@ -131,13 +136,16 @@ export async function PUT(request: NextRequest) {
         }
         break;
       case 'demote':
-        if (targetUser.role === 'admin' && targetUser.userId !== adminProfile.userId) {
-          targetUser.role = 'therapist';
-        } else {
-          return NextResponse.json(
-            { error: 'Can only demote other admins' },
-            { status: 400 }
-          );
+        {
+          if (targetUser.userId === adminProfile.userId) {
+            return NextResponse.json(
+              { error: 'You cannot modify your own account' },
+              { status: 400 }
+            );
+          }
+          const roles = new Set<'therapist' | 'admin'>(oldRoles.length ? oldRoles : [targetUser.role]);
+          roles.delete('admin');
+          targetUser.roles = Array.from(roles);
         }
         break;
       case 'activate':
@@ -153,7 +161,7 @@ export async function PUT(request: NextRequest) {
         );
     }
 
-    await targetUser.save();
+    await UserProfile.updateOne({ userId: targetUser.userId }, targetUser);
 
     // Log the action
     await AuditLog.create({
@@ -162,7 +170,7 @@ export async function PUT(request: NextRequest) {
       performedBy: adminProfile.userId,
       targetUserId: targetUser.userId,
       oldValue: { role: oldRole, status: oldStatus },
-      newValue: { role: targetUser.role, status: targetUser.status },
+      newValue: { role: targetUser.role, roles: targetUser.roles, status: targetUser.status },
       details: `Admin ${adminProfile.firstName} ${adminProfile.lastName} ${action}d user ${targetUser.firstName} ${targetUser.lastName}`
     });
 

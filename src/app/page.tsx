@@ -47,11 +47,11 @@ export default function Home() {
               <div className="relative">
                 <div className="absolute inset-0 bg-blue-400 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
                 <Image
-                  src="/LOGO-SOUSS-MASSA-1033x308px-removebg-preview.png"
+                  src="/LOGO-removebg-preview.png"
                   alt="Société Régionale Multiservices SOUSS MASSA"
                   width={150}
-                  height={45}
-                  className="h-12 w-auto relative z-10 transition-transform duration-300 group-hover:scale-105"
+                  height={150}
+                  className="h-32 w-auto relative z-10 transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
             </div>

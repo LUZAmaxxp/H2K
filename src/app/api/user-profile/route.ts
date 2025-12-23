@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           email: session.user.email,
           role: 'therapist', // Default role as requested
+          roles: ['therapist'],
           status: 'pending', // Default status
           firstName: firstName,
           lastName: lastName,
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       email: session.user.email,
       role,
+      roles: [role],
       status: role === 'therapist' ? 'pending' : 'active',
       firstName,
       lastName,

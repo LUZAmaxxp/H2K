@@ -41,21 +41,22 @@ export async function middleware(request: NextRequest) {
           const userProfile = await UserProfile.findOne({ userId: session.user.id });
           
           if (userProfile) {
+            const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
             // If therapist is pending approval, redirect to pending approval page
-            if (userProfile.role === 'therapist' && userProfile.status === 'pending') {
+            if (isTherapist && userProfile.status === 'pending') {
               const pendingUrl = new URL('/auth/pending-approval', request.url);
               return NextResponse.redirect(pendingUrl);
             }
             
             // If therapist is rejected, redirect to sign-in with message
-            if (userProfile.role === 'therapist' && userProfile.status === 'rejected') {
+            if (isTherapist && userProfile.status === 'rejected') {
               const signInUrl = new URL('/auth/sign-in', request.url);
               signInUrl.searchParams.set('error', 'account_rejected');
               return NextResponse.redirect(signInUrl);
             }
             
             // If therapist is inactive, redirect to sign-in
-            if (userProfile.role === 'therapist' && userProfile.status === 'inactive') {
+            if (isTherapist && userProfile.status === 'inactive') {
               const signInUrl = new URL('/auth/sign-in', request.url);
               signInUrl.searchParams.set('error', 'account_inactive');
               return NextResponse.redirect(signInUrl);

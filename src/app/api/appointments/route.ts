@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { Appointment, UserProfile, Patient, WaitingList } from '@/lib/models';
+import { Appointment, UserProfile, Patient, IAppointment } from '@/lib/models';
 import { generateAllAppointmentsReport } from '@/lib/docx-generator';
 
 // GET /api/appointments - Get appointments (role-based)
@@ -36,13 +36,16 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
     const exportType = searchParams.get('export');
 
-    let query: any = {};
+    const query: Record<string, unknown> = {};
+
+    const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
+    const isAdmin = userProfile.role === 'admin' || userProfile.roles?.includes('admin');
 
     // Role-based filtering
-    if (userProfile.role === 'therapist') {
+    if (isTherapist) {
       // Therapists can only see their own appointments
       query.therapistId = userProfile.userId;
-    } else if (userProfile.role === 'admin') {
+    } else if (isAdmin) {
       // Admins can see all appointments or filter by therapist
       if (therapistId) {
         query.therapistId = therapistId;
@@ -73,14 +76,14 @@ export async function GET(request: NextRequest) {
       .populate('patientId', 'firstName lastName medicalRecordNumber phoneNumber')
       .sort({ date: 1, time: 1 });
 
-    if (exportType === 'docx' && userProfile.role === 'admin') {
-      const buffer = await generateAllAppointmentsReport(appointments as any);
+    if (exportType === 'docx' && isAdmin) {
+      const buffer = await generateAllAppointmentsReport(appointments as unknown as IAppointment[]);
       const filenameBase = startDate && endDate
         ? `appointments_${startDate}_${endDate}`
         : date
           ? `appointments_${date}`
           : `appointments_all`;
-      return new NextResponse(buffer, {
+      return new NextResponse(buffer as unknown as BodyInit, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'Content-Disposition': `attachment; filename="${filenameBase}.docx"`,
@@ -116,7 +119,8 @@ export async function POST(request: NextRequest) {
 
     // Get user profile
     const userProfile = await UserProfile.findOne({ userId: session.user.id });
-    if (!userProfile || userProfile.role !== 'therapist') {
+    const isTherapist = !!userProfile && (userProfile.role === 'therapist' || userProfile.roles?.includes('therapist'));
+    if (!userProfile || !isTherapist) {
       return NextResponse.json(
         { error: 'Only therapists can create appointments' },
         { status: 403 }
@@ -344,8 +348,7 @@ async function suggestAlternativeRooms(data: { date: Date; time: string; duratio
   const availableRooms: string[] = [];
 
   for (const room of rooms) {
-    if (room.name === data.room) continue;
-    
+    if (room.name === data.room) continue;    
     const startOfDay = new Date(data.date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(data.date);

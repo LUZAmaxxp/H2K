@@ -48,13 +48,13 @@ export const auth = betterAuth({
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Magic Link Sign In - SRM-SM</title>
+              <title>Magic Link Sign In - ARC-SaaS</title>
             </head>
             <body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
               <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid rgba(0,0,0,0.1);">
                 <!-- Header -->
                 <div style="background:#ffffff;padding:40px 32px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.1);">
-                  <img src="${url.split("/api")[0]}/LOGO-SOUSS-MASSA-1033x308px-removebg-preview.png" alt="SRM-SM" style="width:120px;height:auto;margin-bottom:24px;" />
+                  <img src="${url.split("/api")[0]}/LOGO-removebg-preview.png" alt="SRM-SM" style="width:120px;height:auto;margin-bottom:24px;" />
                   <h1 style="color:#333333;margin:0;font-size:28px;font-weight:700;letter-spacing:-0.5px;">Magic Link Sign In</h1>
                   <p style="color:#666666;margin:12px 0 0 0;font-size:16px;">Secure passwordless access to your account</p>
                 </div>
@@ -82,7 +82,7 @@ export const auth = betterAuth({
                     <ul style="color:#333333;margin:0;padding-left:20px;line-height:1.8;font-size:14px;">
                       <li>Dashboard access</li>
                       <li>downloading excel file</li>
-                      <li>Creation of reclamations and interventions</li>
+                      <li>Creation of appointements</li>
                     
                     </ul>
                   </div>
@@ -166,13 +166,13 @@ export const auth = betterAuth({
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Password Reset - SRM-SM</title>
+            <title>Password Reset - ARC-SaaS</title>
           </head>
           <body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid rgba(0,0,0,0.1);">
               <!-- Header -->
               <div style="background:#ffffff;padding:40px 32px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.1);">
-                <img src="${url.split("/api")[0]}/LOGO-SOUSS-MASSA-1033x308px-removebg-preview.png" alt="SRM-SM" style="width:120px;height:auto;margin-bottom:24px;" />
+                <img src="${url.split("/api")[0]}/LOGO-removebg-preview.png" alt="SRM-SM" style="width:120px;height:auto;margin-bottom:24px;" />
                 <h1 style="color:#333333;margin:0;font-size:28px;font-weight:700;letter-spacing:-0.5px;">Password Reset Request</h1>
                 <p style="color:#666666;margin:12px 0 0 0;font-size:16px;">Secure password recovery for your account</p>
               </div>
@@ -182,7 +182,8 @@ export const auth = betterAuth({
                 <h2 style="color:#333333;margin:0 0 20px 0;font-size:24px;font-weight:600;">Reset Your Password</h2>
                 
                 <p style="color:#333333;font-size:16px;line-height:1.6;margin:0 0 24px 0;">
-                  We received a request to reset the password for your <strong>SRM-SM</strong> account. 
+                  We received a request to reset the password for your <strong>ARC-SaaS
+                  </strong> account. 
                   Click the button below to create a new password and regain access to your account.
                 </p>
                 
@@ -256,7 +257,7 @@ export const auth = betterAuth({
         to: user.email as string,
         subject: "Welcome to SRM-SM - Verify Your Email Address",
         text: `
-Welcome to Sociéte Regionale Multiservices - SOUSS MASSA!
+Welcome to Your Appointements Manager System!
 
 Thank you for joining our research platform. To complete your registration and secure your account, please verify your email address by clicking the link below:
 
@@ -267,8 +268,7 @@ This verification link will expire in 24 hours for security reasons.
 Once verified, you'll have access to:
 • Dashboard access
 • Downloading excel file
-• Creation of reclamations and interventions
-
+• Creation of Appointements
 
 
 
@@ -290,9 +290,9 @@ Need help? Contact us at  allouchayman21@gmail.com
             <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid rgba(0,0,0,0.1);">
               <!-- Header -->
               <div style="background:#ffffff;padding:40px 32px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.1);">
-                <img src="${url.split("/api")[0]}/LOGO-SOUSS-MASSA-1033x308px-removebg-preview.png" alt="SRM-SM" style="width:120px;height:auto;margin-bottom:24px;" />
+                <img src="${url.split("/api")[0]}/LOGO-removebg-preview.png" alt="SRM-SM" style="width:120px;height:auto;margin-bottom:24px;" />
                 <h1 style="color:#333333;margin:0;font-size:28px;font-weight:700;letter-spacing:-0.5px;">Welcome to SRM-SM!</h1>
-                <p style="color:#666666;margin:12px 0 0 0;font-size:16px;">Sociéte Regionale Multiservices - SOUSS MASSA</p>
+                <p style="color:#666666;margin:12px 0 0 0;font-size:16px;">ARC-SaaS</p>
               </div>
               
               <!-- Content -->

@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
     const therapistId = searchParams.get('therapistId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const exportType = searchParams.get('export');
 
     let query: any = {};
 
@@ -51,8 +54,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Filter by date if provided
-    if (date) {
+    // Filter by date range if provided
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      query.date = { $gte: start, $lte: end };
+    } else if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
@@ -63,6 +72,21 @@ export async function GET(request: NextRequest) {
     const appointments = await Appointment.find(query)
       .populate('patientId', 'firstName lastName medicalRecordNumber phoneNumber')
       .sort({ date: 1, time: 1 });
+
+    if (exportType === 'docx' && userProfile.role === 'admin') {
+      const buffer = await generateAllAppointmentsReport(appointments as any);
+      const filenameBase = startDate && endDate
+        ? `appointments_${startDate}_${endDate}`
+        : date
+          ? `appointments_${date}`
+          : `appointments_all`;
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${filenameBase}.docx"`,
+        },
+      });
+    }
 
     return NextResponse.json(appointments);
   } catch (error) {

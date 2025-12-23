@@ -223,7 +223,7 @@ function createSectionHeader(text: string, spacingBefore = 400, spacingAfter = 2
 
 // Helper function to create header table with logo and title
 function createHeaderTable(): Table {
-  const logoPath = path.join(process.cwd(), 'public', 'LOGO-SOUSS-MASSA-1033x308px-removebg-preview.png');
+  const logoPath = path.join(process.cwd(), 'public', 'LOGO-removebg-preview.png');
   
   let logoImage = null;
   if (fs.existsSync(logoPath)) {
@@ -263,7 +263,7 @@ function createHeaderTable(): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "RAPPORT DES TRAVAUX",
+                    text: "RAPPORT DES RENDEZ-VOUS",
                     bold: true,
                     size: 18,
                     color: COLORS.PRIMARY,
@@ -276,7 +276,7 @@ function createHeaderTable(): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "D'EXPLOITATION ET DE LA MAINTENANCE",
+                    text: "DES PHYSIOTHERAPISTS",
                     bold: true,
                     size: 16,
                     color: COLORS.PRIMARY,
@@ -286,18 +286,8 @@ function createHeaderTable(): Table {
                 alignment: AlignmentType.CENTER,
                 spacing: { after: 80 },
               }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "DES STATIONS ET KITS DE RELEVAGE",
-                    bold: true,
-                    size: 16,
-                    color: COLORS.PRIMARY,
-                    font: 'Arial',
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
+              
+             
             ],
             verticalAlign: AlignmentType.CENTER,
           }),
@@ -330,7 +320,7 @@ function createSignatureSection(): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "Visa responsable d'intervention",
+                    text: "Visa responsable de rendez-vous",
                     bold: true,
                     size: 14,
                     color: COLORS.SECONDARY,
@@ -571,4 +561,120 @@ export async function generateReclamationDoc(data: ReclamationData): Promise<Buf
       description: descriptionWithLabels
     }
   );
+}
+
+// Appointment reporting
+import type { IAppointment } from '@/lib/models';
+
+export async function generateAppointmentReport(appointment: IAppointment): Promise<Buffer> {
+  const details = [
+    createInfoItem("Thérapeute", appointment.therapistName),
+    createInfoItem("Patient", appointment.patientName),
+    createInfoItem("Téléphone", appointment.patientPhone),
+    createInfoItem("Date", new Date(appointment.date).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })),
+    createInfoItem("Heure", appointment.time),
+    createInfoItem("Durée (min)", String(appointment.duration)),
+    createInfoItem("Salle", appointment.room),
+    createInfoItem("Type", appointment.appointmentType),
+    createInfoItem("Statut", appointment.status),
+  ];
+
+  const notes = new Paragraph({
+    children: [
+      new TextRun({
+        text: appointment.medicalNotes || 'Aucune note médicale',
+        size: 16,
+        color: COLORS.SECONDARY,
+        font: 'Arial',
+      }),
+    ],
+    spacing: { after: 150 },
+    alignment: AlignmentType.JUSTIFIED,
+  });
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 600,
+              right: 600,
+              bottom: 600,
+              left: 600,
+            },
+          },
+        },
+        children: [
+          createHeaderTable(),
+          new Paragraph({ children: [], spacing: { after: 600 } }),
+          createElegantFrame("DÉTAILS DU RENDEZ-VOUS", details),
+          createElegantFrame("NOTES MÉDICALES", [notes]),
+          createSignatureSection(),
+        ],
+      },
+    ],
+  });
+
+  return Packer.toBuffer(doc);
+}
+
+export async function generateAllAppointmentsReport(appointments: IAppointment[]): Promise<Buffer> {
+  const headerRow = new TableRow({
+    children: [
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Date", bold: true })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Heure", bold: true })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Thérapeute", bold: true })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Patient", bold: true })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Type", bold: true })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Salle", bold: true })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Statut", bold: true })] })] }),
+    ],
+  });
+
+  const rows = appointments.map((apt) => new TableRow({
+    children: [
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: new Date(apt.date).toLocaleDateString('fr-FR') })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: apt.time })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: apt.therapistName })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: apt.patientName })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: apt.appointmentType })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: apt.room })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: apt.status })] })] }),
+    ],
+  }));
+
+  const table = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [headerRow, ...rows],
+  });
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 600,
+              right: 600,
+              bottom: 600,
+              left: 600,
+            },
+          },
+        },
+        children: [
+          createHeaderTable(),
+          new Paragraph({ children: [], spacing: { after: 400 } }),
+          createSectionHeader("LISTE DES RENDEZ-VOUS"),
+          table,
+        ],
+      },
+    ],
+  });
+
+  return Packer.toBuffer(doc);
 }

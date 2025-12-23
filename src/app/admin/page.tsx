@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Shield, AlertCircle, Trash2 } from 'lucide-react';
+import { Shield, AlertCircle, Trash2, Users, LogOut, Settings, User, Calendar, BarChart, Home } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AdminTable from '@/components/admin-table';
 import SidebarMenu from '@/components/sidebar-menu';
@@ -13,103 +13,6 @@ import { authClient } from '@/lib/auth-client';
 import { useTranslation } from '@/lib/i18n-context';
 
 // Admin Records Table Component
-function AdminRecordsTable({
-  records,
-  type,
-  onDelete
-}: {
-  records: Record<string, unknown>[];
-  type: 'interventions' | 'reclamations';
-  onDelete: (id: string, type: 'interventions' | 'reclamations') => void;
-}) {
-  const { t } = useTranslation();
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return 'Invalid Date';
-      }
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return 'Invalid Date';
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {type === 'interventions' ? t('admin.all-interventions') : t('admin.all-reclamations')}
-          ({records.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {records.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600">{t('admin.no-records-found')}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">{t('table.id')}</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">{t('table.user')}</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">{t('table.date')}</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">{t('table.description')}</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">{t('table.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((record, index) => (
-                  <tr key={String(record._id)} className="border-b hover:bg-gray-50">
-                    <td className="py-4 px-4">
-                      <div className="text-sm font-medium">{index + 1}</div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="text-sm text-gray-600">
-                        {String(
-                          (record.userName && record.userName !== 'N/A')
-                            ? record.userName
-                            : ((record.userId as Record<string, unknown>)?.email || 'N/A')
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="text-sm text-gray-600">
-                        {formatDate(String(record.createdAt))}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="text-sm text-gray-600 max-w-xs truncate">
-                        {String(record.description || record.entrepriseName || 'N/A')}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onDelete(String(record._id), type)}
-                      >
-                        {t('admin.delete')}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 
 interface UserData {
@@ -132,13 +35,21 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [authorized, setAuthorized] = useState(false);
-  const [activeSection, setActiveSection] = useState<'overview' | 'interventions' | 'reclamations' | 'records' | 'admin'>('admin');
-  const [allInterventions, setAllInterventions] = useState<Record<string, unknown>[]>([]);
-  const [allReclamations, setAllReclamations] = useState<Record<string, unknown>[]>([]);
+  const [activeSection, setActiveSection] = useState<'overview' | 'appointements' | 'analytics' | 'settings' | 'admin'>('admin');
   const [currentView, setCurrentView] = useState<'users' | 'interventions' | 'reclamations'>('users');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<{ id: string; type: 'interventions' | 'reclamations' } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedTherapistId, setSelectedTherapistId] = useState<string>('');
+  const [selectedWeekStart, setSelectedWeekStart] = useState<string>(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff);
+    return monday.toISOString().split('T')[0];
+  });
+  const [allAppointments, setAllAppointments] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -205,35 +116,21 @@ export default function AdminPage() {
     }
   }, [authenticated, authorized, router]);
 
-  const fetchAllRecords = useCallback(async () => {
-    if (!authenticated || !authorized) return;
-
-    try {
-      // Fetch all interventions
-      const interventionsResponse = await fetch('/api/interventions?admin=true');
-      if (interventionsResponse.ok) {
-        const interventionsData = await interventionsResponse.json();
-        setAllInterventions(interventionsData.data || []);
-      }
-
-      // Fetch all reclamations
-      const reclamationsResponse = await fetch('/api/reclamations?admin=true');
-      if (reclamationsResponse.ok) {
-        const reclamationsData = await reclamationsResponse.json();
-        setAllReclamations(reclamationsData.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching all records:', error);
-      toast.error('An error occurred while fetching records');
-    }
-  }, [authenticated, authorized]);
+ 
 
   const fetchAllAppointments = useCallback(async () => {
     if (!authenticated || !authorized) return;
 
     try {
-      // Fetch all appointments for admin
-      const appointmentsResponse = await fetch('/api/appointments?admin=true');
+      const start = new Date(selectedWeekStart);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      const qs = new URLSearchParams({
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0],
+      });
+      if (selectedTherapistId) qs.set('therapistId', selectedTherapistId);
+      const appointmentsResponse = await fetch(`/api/appointments?${qs.toString()}`);
       if (appointmentsResponse.ok) {
         const appointmentsData = await appointmentsResponse.json();
         setAllAppointments(appointmentsData || []);
@@ -242,7 +139,7 @@ export default function AdminPage() {
       console.error('Error fetching all appointments:', error);
       toast.error('An error occurred while fetching appointments');
     }
-  }, [authenticated, authorized]);
+  }, [authenticated, authorized, selectedWeekStart, selectedTherapistId]);
 
   const handleDeleteRecord = useCallback((id: string, type: 'interventions' | 'reclamations') => {
     setRecordToDelete({ id, type });
@@ -280,6 +177,12 @@ export default function AdminPage() {
       fetchAdminData();
     }
   }, [authenticated, authorized, fetchAdminData]);
+
+  useEffect(() => {
+    if (authenticated && authorized && currentView === 'appointments') {
+      fetchAllAppointments();
+    }
+  }, [authenticated, authorized, currentView, selectedWeekStart, selectedTherapistId, fetchAllAppointments]);
 
   if (!authenticated || !authorized) {
     return (
@@ -322,7 +225,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <SidebarMenu activeSection={activeSection} onSectionChange={setActiveSection} />
+      <SidebarMenu activeSection={activeSection} />
 
       {/* Main Content */}
       <div className="flex-1 lg:ml-16">
@@ -334,6 +237,77 @@ export default function AdminPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('admin.title')}</h1>
             </div>
             <p className="text-sm sm:text-base text-gray-600">{t('admin.subtitle')}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentView('users');
+                  setActiveSection('users');
+                }}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Users
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentView('appointments');
+                  setActiveSection('appointments');
+                  fetchAllAppointments();
+                }}
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Appointments
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentView('appointments');
+                  setActiveSection('analytics');
+                }}
+              >
+                <BarChart className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/profile')}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/settings')}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  try {
+                    await authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => router.push('/'),
+                      },
+                    });
+                  } catch {
+                    router.push('/');
+                  }
+                }}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Disconnect
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/dashboard')}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                User Dashboard
+              </Button>
+            </div>
           </div>
 
           {/* View Toggle */}
@@ -379,14 +353,57 @@ export default function AdminPage() {
           {currentView === 'appointments' && (
             <Card>
               <CardHeader>
-                <CardTitle>All Appointments ({allAppointments.length})</CardTitle>
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => window.open('/api/appointments?export=docx', '_blank')}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Export All Appointments (DOCX)
-                  </Button>
+                <CardTitle>Weekly Appointments ({allAppointments.length})</CardTitle>
+                <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                  <div className="flex gap-2 items-center">
+                    <label className="text-sm text-gray-600">Week start</label>
+                    <input
+                      type="date"
+                      value={selectedWeekStart}
+                      onChange={(e) => setSelectedWeekStart(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <label className="text-sm text-gray-600">Therapist</label>
+                    <select
+                      value={selectedTherapistId}
+                      onChange={(e) => setSelectedTherapistId(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">All</option>
+                      {users
+                        .filter(u => u.role === 'therapist')
+                        .map(u => (
+                          <option key={u._id} value={u._id}>
+                            {u.name || `${u._id}`}
+                          </option>
+                        ))}
+                    </select>
+                    <Button
+                      variant="outline"
+                      onClick={fetchAllAppointments}
+                    >
+                      Refresh
+                    </Button>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => {
+                        const start = new Date(selectedWeekStart);
+                        const end = new Date(start);
+                        end.setDate(start.getDate() + 6);
+                        const qs = new URLSearchParams({
+                          startDate: start.toISOString().split('T')[0],
+                          endDate: end.toISOString().split('T')[0],
+                          export: 'docx',
+                        });
+                        if (selectedTherapistId) qs.set('therapistId', selectedTherapistId);
+                        window.open(`/api/appointments?${qs.toString()}`, '_blank');
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Export Week (DOCX)
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -395,70 +412,110 @@ export default function AdminPage() {
                     <p className="text-gray-600">No appointments found</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">ID</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Therapist</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Patient</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Time</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allAppointments.map((appointment, index) => (
-                          <tr key={String(appointment._id)} className="border-b hover:bg-gray-50">
-                            <td className="py-4 px-4">
-                              <div className="text-sm font-medium">{index + 1}</div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-600">
-                                {String(appointment.therapistName || 'N/A')}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-600">
-                                {String(appointment.patientName || 'N/A')}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-600">
-                                {appointment.date ? new Date(String(appointment.date)).toLocaleDateString() : 'N/A'}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-600">
-                                {String(appointment.time || 'N/A')}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-600">
-                                {String(appointment.appointmentType || 'N/A')}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-600">
-                                {String(appointment.status || 'N/A')}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(`/api/export/appointment/${appointment._id}`, '_blank')}
-                              >
-                                Export DOCX
-                              </Button>
-                            </td>
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">ID</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Therapist</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Patient</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Time</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {allAppointments.map((appointment, index) => (
+                            <tr key={String(appointment._id)} className="border-b hover:bg-gray-50">
+                              <td className="py-4 px-4">
+                                <div className="text-sm font-medium">{index + 1}</div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {String(appointment.therapistName || 'N/A')}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {String(appointment.patientName || 'N/A')}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {appointment.date ? new Date(String(appointment.date)).toLocaleDateString() : 'N/A'}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {String(appointment.time || 'N/A')}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {String(appointment.appointmentType || 'N/A')}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {String(appointment.status || 'N/A')}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(`/api/appointments/${appointment._id}/report`, '_blank')}
+                                >
+                                  Export DOCX
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="mt-8">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Appointments by Day</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {(() => {
+                            const start = new Date(selectedWeekStart);
+                            const days = Array.from({ length: 7 }).map((_, i) => {
+                              const d = new Date(start);
+                              d.setDate(start.getDate() + i);
+                              const dayStr = d.toISOString().split('T')[0];
+                              const count = allAppointments.filter(a => {
+                                const ad = new Date(String(a.date));
+                                return ad.toISOString().split('T')[0] === dayStr;
+                              }).length;
+                              return { label: d.toLocaleDateString(undefined, { weekday: 'short' }), count };
+                            });
+                            const max = Math.max(1, ...days.map(d => d.count));
+                            return (
+                              <div className="grid grid-cols-7 gap-2 items-end h-40">
+                                {days.map((d, idx) => (
+                                  <div key={idx} className="flex flex-col items-center justify-end">
+                                    <div
+                                      className="w-full bg-blue-600 rounded-t"
+                                      style={{ height: `${(d.count / max) * 100}%` }}
+                                      title={`${d.label}: ${d.count}`}
+                                    />
+                                    <span className="text-xs mt-2 text-gray-600">{d.label}</span>
+                                    <span className="text-xs text-gray-800">{d.count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>

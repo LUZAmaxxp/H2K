@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, CheckCircle, XCircle, UserPlus, UserMinus } from 'lucide-react';
+import { Users, Calendar, CheckCircle, XCircle, UserPlus, UserMinus, LogOut, Settings, User, BarChart, Home, Download } from 'lucide-react';
+import SidebarMenu from '@/components/sidebar-menu';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -26,10 +27,22 @@ interface User {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [authenticated, setAuthenticated] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'appointments' | 'analytics'>('users');
+  const initialTab = (searchParams?.get('tab') as 'users' | 'appointments' | 'analytics') || 'users';
+  const [activeTab, setActiveTab] = useState<'users' | 'appointments' | 'analytics'>(initialTab);
+  const [selectedTherapistId, setSelectedTherapistId] = useState<string>('');
+  const [selectedWeekStart, setSelectedWeekStart] = useState<string>(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff);
+    return monday.toISOString().split('T')[0];
+  });
+  const [appointments, setAppointments] = useState<any[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -113,8 +126,40 @@ export default function AdminDashboard() {
   const pendingUsers = users.filter(u => u.status === 'pending');
   const activeTherapists = users.filter(u => u.role === 'therapist' && (u.status === 'approved' || u.status === 'active'));
   const totalAppointments = users.reduce((sum, u) => sum + u.appointmentCount, 0);
+  const weekEndDate = useMemo(() => {
+    const start = new Date(selectedWeekStart);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return end.toISOString().split('T')[0];
+  }, [selectedWeekStart]);
 
-  if (loading || !authenticated) {
+
+
+  const fetchAppointments = async () => {
+    try {
+      const qs = new URLSearchParams({
+        startDate: selectedWeekStart,
+        endDate: weekEndDate,
+      });
+      if (selectedTherapistId) qs.set('therapistId', selectedTherapistId);
+      const res = await fetch(`/api/appointments?${qs.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast.error('Failed to load appointments');
+    }
+  };
+
+  useEffect(() => {
+    if (authenticated && activeTab === 'appointments') {
+      fetchAppointments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, activeTab, selectedWeekStart, selectedTherapistId]);
+    if (loading || !authenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -126,14 +171,59 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 flex">
+      <SidebarMenu activeSection={activeTab} />
+      <div className="flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="mt-2 text-sm sm:text-base text-gray-600">
             Hôpital Hassan II - Physiotherapy Department Management
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setActiveTab('users')}>
+              <Users className="w-4 h-4 mr-2" />
+              Users
+            </Button>
+            <Button variant="outline" onClick={() => setActiveTab('appointments')}>
+              <Calendar className="w-4 h-4 mr-2" />
+              Appointments
+            </Button>
+            <Button variant="outline" onClick={() => setActiveTab('analytics')}>
+              <BarChart className="w-4 h-4 mr-2" />
+              Analytics
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/profile')}>
+              <User className="w-4 h-4 mr-2" />
+              Profile
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/settings')}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                try {
+                  await authClient.signOut({
+                    fetchOptions: {
+                      onSuccess: () => router.push('/'),
+                    },
+                  });
+                } catch {
+                  router.push('/');
+                }
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Disconnect
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/dashboard')}>
+              <Home className="w-4 h-4 mr-2" />
+              User Dashboard
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -343,14 +433,113 @@ export default function AdminDashboard() {
         {activeTab === 'appointments' && (
           <Card>
             <CardHeader>
-              <CardTitle>All Appointments</CardTitle>
-              <CardDescription>View and manage all department appointments</CardDescription>
+              <CardTitle>Weekly Appointments ({appointments.length})</CardTitle>
+              <CardDescription>View and manage department appointments by week</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">Appointment overview coming soon...</p>
-              <p className="text-sm text-gray-500 mt-2">
-                This will include a calendar view and appointment management interface.
-              </p>
+              <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-4">
+                <div className="flex gap-2 items-center">
+                  <label className="text-sm text-gray-600">Week start</label>
+                  <input
+                    type="date"
+                    value={selectedWeekStart}
+                    onChange={(e) => setSelectedWeekStart(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                  <label className="text-sm text-gray-600">Therapist</label>
+                  <select
+                    value={selectedTherapistId}
+                    onChange={(e) => setSelectedTherapistId(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">All</option>
+                    {users
+                      .filter(u => u.role === 'therapist')
+                      .map(u => (
+                        <option key={u._id} value={u._id}>
+                          {u.firstName} {u.lastName}
+                        </option>
+                      ))}
+                  </select>
+                  <Button variant="outline" onClick={fetchAppointments}>
+                    Refresh
+                  </Button>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => {
+                      const qs = new URLSearchParams({
+                        startDate: selectedWeekStart,
+                        endDate: weekEndDate,
+                        export: 'docx',
+                      });
+                      if (selectedTherapistId) qs.set('therapistId', selectedTherapistId);
+                      window.open(`/api/appointments?${qs.toString()}`, '_blank');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Week (DOCX)
+                  </Button>
+                </div>
+              </div>
+
+              {appointments.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">No appointments found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Therapist</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Patient</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Time</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {appointments.map((appointment: any) => (
+                        <tr key={String(appointment._id)} className="border-b hover:bg-gray-50">
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-gray-900">{String(appointment.therapistName || 'N/A')}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-gray-900">{String(appointment.patientName || 'N/A')}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-gray-600">
+                              {appointment.date ? new Date(String(appointment.date)).toLocaleDateString() : 'N/A'}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-gray-600">{String(appointment.time || 'N/A')}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-gray-600">{String(appointment.appointmentType || 'N/A')}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-gray-600">{String(appointment.status || 'N/A')}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(`/api/appointments/${appointment._id}/report`, '_blank')}
+                            >
+                              Export DOCX
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -363,15 +552,41 @@ export default function AdminDashboard() {
               <CardDescription>Department statistics and insights</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">Analytics dashboard coming soon...</p>
-              <p className="text-sm text-gray-500 mt-2">
-                This will include charts for appointment trends, therapist performance, and room utilization.
-              </p>
+              {(() => {
+                const start = new Date(selectedWeekStart);
+                const days = Array.from({ length: 7 }).map((_, i) => {
+                  const d = new Date(start);
+                  d.setDate(start.getDate() + i);
+                  const dayStr = d.toISOString().split('T')[0];
+                  const count = appointments.filter(a => {
+                    const ad = new Date(String(a.date));
+                    return ad.toISOString().split('T')[0] === dayStr;
+                  }).length;
+                  return { label: d.toLocaleDateString(undefined, { weekday: 'short' }), count };
+                });
+                const max = Math.max(1, ...days.map(d => d.count));
+                return (
+                  <div className="grid grid-cols-7 gap-2 items-end h-40">
+                    {days.map((d, idx) => (
+                      <div key={idx} className="flex flex-col items-center justify-end">
+                        <div
+                          className="w-full bg-blue-600 rounded-t"
+                          style={{ height: `${(d.count / max) * 100}%` }}
+                          title={`${d.label}: ${d.count}`}
+                        />
+                        <span className="text-xs mt-2 text-gray-600">{d.label}</span>
+                        <span className="text-xs text-gray-800">{d.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         )}
       </div>
     </div>
-  );
-}
+    </div> )}
+  
+
 

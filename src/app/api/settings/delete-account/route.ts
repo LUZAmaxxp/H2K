@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Delete all user data
     await Promise.all([
       // If therapist, delete their appointments and waiting list entries
-      ...(userProfile?.role === 'therapist' ? [
+      ...((userProfile?.role === 'therapist' || userProfile?.roles?.includes('therapist')) ? [
         Appointment.deleteMany({ therapistId: session.user.id }),
         WaitingList.deleteMany({ therapistId: session.user.id })
       ] : []),

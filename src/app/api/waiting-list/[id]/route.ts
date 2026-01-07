@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { WaitingList, UserProfile, Appointment, Patient } from '@/lib/models';
+import { WaitingList, UserProfile, Appointment, Patient, Room, IAppointment } from '@/lib/models';
 
 // DELETE /api/waiting-list/[id] - Remove from waiting list
 export async function DELETE(
@@ -112,41 +112,31 @@ export async function POST(
       );
     }
 
-    // Check availability
-    // Import the availability check utility from the appointments route file
-    // Note: ensure the appointments route exports a checkAvailability function or inline the logic here
-  //   // For now, inline a simple availability check to avoid runtime import issues
-  //  const checkAvailability = async (therapistId: string, date: Date, time: string) => {
-  //     const startOfDay = new Date(date);
-  //     startOfDay.setHours(0, 0, 0, 0);
-  //     const endOfDay = new Date(date);
-  //     endOfDay.setHours(23, 59, 59, 999);
+    const timeValid = /^([01]\d|2[0-3]):([0-5]\d)$/.test(time);
+    if (!timeValid) {
+      return NextResponse.json(
+        { error: 'Invalid time format. Use HH:MM (24h)' },
+        { status: 400 }
+      );
+    }
 
-  //     const count = await Appointment.countDocuments({
-  //       therapistId,
-  //       date: { $gte: startOfDay, $lte: endOfDay },
-  //       time,
-  //       status: { $ne: 'cancelled' }
-  //     });
-
-  //     return count === 0;
-  //   };
-    // For now, we'll do a simple check
     const appointmentDate = new Date(date);
-    const startOfDay = new Date(appointmentDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(appointmentDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const therapistDailyCount = await Appointment.countDocuments({
+    const availability = await checkAvailability({
       therapistId: userProfile.userId,
-      date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $ne: 'cancelled' }
+      date: appointmentDate,
+      time,
+      duration: waitingListEntry.duration,
+      room
     });
 
-    if (therapistDailyCount >= 12) {
+    if (!availability.isAvailable) {
       return NextResponse.json(
-        { error: 'Therapist has reached daily limit of 12 appointments' },
+        {
+          error: 'Time slot not available',
+          conflictingAppointment: availability.conflictingAppointment,
+          alternativeTimes: availability.alternativeTimes,
+          alternativeRooms: availability.alternativeRooms
+        },
         { status: 409 }
       );
     }
@@ -191,6 +181,9 @@ export async function POST(
     // Remove from waiting list
     await WaitingList.findByIdAndDelete(params.id);
 
+    userProfile.totalAppointments += 1;
+    await userProfile.save();
+
     // TODO: Send SMS notification
     // await sendSMSNotification({
     //   to: waitingListEntry.patientPhone,
@@ -205,5 +198,128 @@ export async function POST(
       { status: 500 }
     );
   }
+}
+
+async function checkAvailability(data: {
+  therapistId: string;
+  date: Date;
+  time: string;
+  duration: number;
+  room: string;
+}): Promise<{
+  isAvailable: boolean;
+  conflictingAppointment?: IAppointment;
+  alternativeTimes?: string[];
+  alternativeRooms?: string[];
+}> {
+  const startOfDay = new Date(data.date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(data.date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const therapistDailyCount = await Appointment.countDocuments({
+    therapistId: data.therapistId,
+    date: { $gte: startOfDay, $lte: endOfDay },
+    status: { $ne: 'cancelled' }
+  });
+  if (therapistDailyCount >= 12) {
+    return { isAvailable: false };
+  }
+
+  const appointmentStart = new Date(data.date);
+  const [hours, minutes] = data.time.split(':').map(Number);
+  appointmentStart.setHours(hours, minutes, 0, 0);
+  const appointmentEnd = new Date(appointmentStart.getTime() + data.duration * 60000);
+
+  const allRoomAppointments = await Appointment.find({
+    room: data.room,
+    date: { $gte: startOfDay, $lte: endOfDay },
+    status: { $ne: 'cancelled' }
+  });
+
+  const roomConflict = allRoomAppointments.find(apt => {
+    const aptStart = new Date(apt.date);
+    const [aptHours, aptMinutes] = apt.time.split(':').map(Number);
+    aptStart.setHours(aptHours, aptMinutes, 0, 0);
+    const aptEnd = new Date(aptStart.getTime() + apt.duration * 60000);
+    return appointmentStart < aptEnd && appointmentEnd > aptStart;
+  });
+
+  if (roomConflict) {
+    return {
+      isAvailable: false,
+      conflictingAppointment: roomConflict,
+      alternativeTimes: suggestAlternativeTimes({ date: data.date, time: data.time, duration: data.duration }),
+      alternativeRooms: await suggestAlternativeRooms({ date: data.date, time: data.time, duration: data.duration, currentRoom: data.room })
+    };
+  }
+
+  const bufferMinutes = 15;
+  const bufferStart = new Date(appointmentStart.getTime() - bufferMinutes * 60000);
+  const bufferEnd = new Date(appointmentEnd.getTime() + bufferMinutes * 60000);
+
+  const therapistAppointments = await Appointment.find({
+    therapistId: data.therapistId,
+    date: { $gte: startOfDay, $lte: endOfDay },
+    status: { $ne: 'cancelled' }
+  });
+
+  const therapistConflict = therapistAppointments.find(apt => {
+    const aptStart = new Date(apt.date);
+    const [aptHours, aptMinutes] = apt.time.split(':').map(Number);
+    aptStart.setHours(aptHours, aptMinutes, 0, 0);
+    const aptEnd = new Date(aptStart.getTime() + apt.duration * 60000);
+    return bufferStart < aptEnd && bufferEnd > aptStart;
+  });
+
+  if (therapistConflict) {
+    return {
+      isAvailable: false,
+      conflictingAppointment: therapistConflict,
+      alternativeTimes: suggestAlternativeTimes({ date: data.date, time: data.time, duration: data.duration }),
+      alternativeRooms: await suggestAlternativeRooms({ date: data.date, time: data.time, duration: data.duration, currentRoom: data.room })
+    };
+  }
+
+  return { isAvailable: true };
+}
+
+function suggestAlternativeTimes(data: { date: Date; time: string; duration: number }): string[] {
+  const alternatives: string[] = [];
+  const [hours, minutes] = data.time.split(':').map(Number);
+  for (let offset = -2; offset <= 2; offset++) {
+    if (offset === 0) continue;
+    const newHours = hours + offset;
+    if (newHours >= 8 && newHours < 20) {
+      alternatives.push(`${String(newHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+    }
+  }
+  return alternatives.slice(0, 3);
+}
+
+async function suggestAlternativeRooms(data: { date: Date; time: string; duration: number; currentRoom: string }): Promise<string[]> {
+  const rooms = await Room.find({ isActive: true });
+  const availableRooms: string[] = [];
+
+  for (const room of rooms) {
+    if (room.name === data.currentRoom) continue;
+    const startOfDay = new Date(data.date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(data.date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const conflicts = await Appointment.find({
+      room: room.name,
+      date: { $gte: startOfDay, $lte: endOfDay },
+      status: { $ne: 'cancelled' },
+      time: data.time
+    });
+
+    if (conflicts.length === 0) {
+      availableRooms.push(room.name);
+    }
+  }
+
+  return availableRooms;
 }
 

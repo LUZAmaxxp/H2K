@@ -16,6 +16,7 @@
   "loading-dashboard": "Chargement du tableau de bord...",
   "navigation": {
     "dashboard": "Tableau de bord",
+    "newAppointement" : "Nouveau rendez-vous",
     "settings": "Paramètres",
     "profile": "Profil",
     "records": "Dossiers",

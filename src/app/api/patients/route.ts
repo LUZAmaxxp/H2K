@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const medicalRecordNumber = searchParams.get('medicalRecordNumber');
     const phoneNumber = searchParams.get('phoneNumber');
 
-    let searchQuery: any = {};
+    const searchQuery: Record<string, unknown> = {};
 
     if (query) {
       // Search by name
@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Only therapists and admins can create patients
-    if (userProfile.role !== 'therapist' && userProfile.role !== 'admin') {
+    const isTherapist = userProfile.role === 'therapist' || userProfile.roles?.includes('therapist');
+    const isAdmin = userProfile.role === 'admin' || userProfile.roles?.includes('admin');
+    if (!isTherapist && !isAdmin) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

@@ -129,7 +129,7 @@ export default function SidebarMenu({ activeSection }: SidebarMenuProps) {
           <div
             className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-green-700 transition-colors"
             onClick={() => handleNavigation('/appointments/new')}
-            title={t('navigation.newIntervention')}
+            title={t('navigation.newAppointement')}
           >
             <Calendar className="w-6 h-6 text-white" />
           </div>

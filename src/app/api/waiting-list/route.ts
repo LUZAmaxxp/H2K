@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { WaitingList, UserProfile, Patient, Appointment } from '@/lib/models';
+import { WaitingList, UserProfile, Patient } from '@/lib/models';
 
 // GET /api/waiting-list - Get waiting list entries
 export async function GET(request: NextRequest) {
@@ -116,26 +116,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check therapist daily appointments
+    // Get current priority number for this therapist and date
     const appointmentDate = new Date(desiredDate);
     const startOfDay = new Date(appointmentDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(appointmentDate);
     endOfDay.setHours(23, 59, 59, 999);
-
-    // const therapistDailyCount = await Appointment.countDocuments({
-    //   therapistId: userProfile.userId,
-    //   date: { $gte: startOfDay, $lte: endOfDay },
-    //   status: { $ne: 'cancelled' }
-    // });
-
-    // Get current priority number for this therapist and date
     const existingEntries = await WaitingList.find({
       therapistId: userProfile.userId,
-      desiredDate: {
-        $gte: startOfDay,
-        $lte: endOfDay
-      }
+      desiredDate: { $gte: startOfDay, $lte: endOfDay }
     }).sort({ priorityNumber: -1 }).limit(1);
 
     const priorityNumber = existingEntries.length > 0

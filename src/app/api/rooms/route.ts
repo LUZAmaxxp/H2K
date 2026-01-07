@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     // Check if user is admin
     const { UserProfile } = await import('@/lib/models');
     const userProfile = await UserProfile.findOne({ userId: session.user.id });
-    
-    if (!userProfile || userProfile.role !== 'admin') {
+    const isAdmin = !!userProfile && (userProfile.role === 'admin' || userProfile.roles?.includes('admin'));
+    if (!userProfile || !isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }

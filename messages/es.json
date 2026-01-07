@@ -17,6 +17,7 @@
   "navigation": {
     "dashboard": "Panel de control",
     "settings": "Configuración",
+    "newAppointement": "Nueva cita",
     "profile": "Perfil",
     "records": "Registros",
     "logout": "Cerrar sesión",

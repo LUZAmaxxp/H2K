@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
     const time = searchParams.get('time');
     const duration = searchParams.get('duration');
     const room = searchParams.get('room');
-    const therapistId = searchParams.get('therapistId') || userProfile.userId;
+    const requestedTherapistId = searchParams.get('therapistId');
+    const isAdmin = userProfile.role === 'admin' || userProfile.roles?.includes('admin');
+    const therapistId = isAdmin ? (requestedTherapistId || userProfile.userId) : userProfile.userId;
 
     if (!date || !time || !duration || !room) {
       return NextResponse.json(

@@ -30,10 +30,10 @@ async function seedAdmin() {
     const collections = await db.listCollections().toArray();
     console.log('   Collections found:', collections.map(c => c.name).join(', '));
 
-    // Admin credentials
-    const adminEmail = 'ayman.allouch@e-polytechnique.ma';
-    const adminPassword = 'Aymanos007';
-    const adminName = 'Ayman Allouch';
+    // Admin credentials (from env or defaults)
+    const adminEmail = process.env.ADMIN_EMAIL || 'allouchayman21@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Aymanos007';
+    const adminName = process.env.ADMIN_NAME || 'Ayman Allouch';
 
     console.log(`\n👤 Creating admin account:`);
     console.log(`   Email: ${adminEmail}`);
@@ -343,6 +343,7 @@ async function seedAdmin() {
       userId: userId,
       email: adminEmail,
       role: 'admin',
+      roles: ['admin'],
       status: 'active',
       firstName: 'Ayman',
       lastName: 'Allouch',

@@ -96,7 +96,7 @@ export default function NewAppointmentPage() {
 
 
 
-  // New patient form data
+  
 
   const [newPatientData, setNewPatientData] = useState({
 

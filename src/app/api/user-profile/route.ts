@@ -181,9 +181,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(userProfile, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating user profile:', error);
-    if (error.code === 11000) {
+    if ((error as { code: number }).code === 11000) {
       return NextResponse.json(
         { error: 'User profile already exists' },
         { status: 409 }

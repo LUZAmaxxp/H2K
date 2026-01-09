@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Locale } from './i18n-client';
-import { authClient } from '@/lib/auth-client';
+
 
 interface I18nContextType {
   locale: Locale;

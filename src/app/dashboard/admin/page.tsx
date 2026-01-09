@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,14 +25,22 @@ interface User {
   createdAt: string;
 }
 
+interface Appointment {
+  _id: string;
+  therapistName?: string;
+  patientName?: string;
+  date?: string;
+  time?: string;
+  appointmentType?: string;
+  status?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [authenticated, setAuthenticated] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const initialTab = (searchParams?.get('tab') as 'users' | 'appointments' | 'analytics') || 'users';
-  const [activeTab, setActiveTab] = useState<'users' | 'appointments' | 'analytics'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'users' | 'appointments' | 'analytics'>('users');
   const [selectedTherapistId, setSelectedTherapistId] = useState<string>('');
   const [selectedWeekStart, setSelectedWeekStart] = useState<string>(() => {
     const today = new Date();
@@ -42,7 +50,17 @@ export default function AdminDashboard() {
     monday.setDate(today.getDate() + diff);
     return monday.toISOString().split('T')[0];
   });
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const currentSearchParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = currentSearchParams.get('tab') as 'users' | 'appointments' | 'analytics';
+      if (tabFromUrl) {
+        setActiveTab(tabFromUrl);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -103,7 +121,7 @@ export default function AdminDashboard() {
         const error = await response.json();
         toast.error(error.error || 'Action failed');
       }
-    } catch (error) {
+    } catch {
       toast.error('Action failed');
     }
   };
@@ -173,8 +191,9 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <SidebarMenu activeSection={activeTab} />
-      <div className="flex-1 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
+      <Suspense fallback={<div>Loading...</div>}>
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -503,7 +522,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {appointments.map((appointment: any) => (
+                      {appointments.map((appointment) => (
                         <tr key={String(appointment._id)} className="border-b hover:bg-gray-50">
                           <td className="py-4 px-4">
                             <div className="text-sm text-gray-900">{String(appointment.therapistName || 'N/A')}</div>
@@ -584,9 +603,9 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
-      </div>
+        </div>
+        </div>
+      </Suspense>
     </div>
-    </div> )}
-  
-
-
+  );
+}

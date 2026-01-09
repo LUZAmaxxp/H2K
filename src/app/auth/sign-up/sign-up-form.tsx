@@ -88,9 +88,9 @@ export default function SignUpForm() {
           );
           // Redirect to pending approval page
           router.push('/auth/pending-approval');
-        } catch (profileError: any) {
+        } catch (profileError: unknown) {
           console.error("Profile creation error:", profileError);
-          toast.error(profileError.message || "Account created but profile setup failed. Please contact support.");
+          toast.error((profileError as Error).message || "Account created but profile setup failed. Please contact support.");
           router.push(
             `${routes.auth.checkEmail}?email=${encodeURIComponent(data.email)}`
           );

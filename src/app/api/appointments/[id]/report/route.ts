@@ -6,7 +6,7 @@ import { generateAppointmentReport } from '@/lib/docx-generator';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Only admins and the assigned therapist can download the report
-    const appointmentId = params.id;
+    const appointmentId = (await params).id;
     const appointment = await Appointment.findById(appointmentId);
 
     if (!appointment) {

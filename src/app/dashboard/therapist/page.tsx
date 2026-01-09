@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,29 +41,7 @@ export default function TherapistDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (session) {
-          setAuthenticated(true);
-          await fetchUserProfile();
-          await fetchAppointments();
-        } else {
-          router.push('/auth/sign-in');
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/auth/sign-in');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const response = await fetch('/api/user-profile');
       if (response.ok) {
@@ -85,9 +63,9 @@ export default function TherapistDashboard() {
       // On error, redirect to sign-up
       router.push('/auth/sign-up');
     }
-  };
+  }, [router]);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       const response = await fetch(`/api/appointments?date=${selectedDate}`);
       if (response.ok) {
@@ -100,13 +78,35 @@ export default function TherapistDashboard() {
       console.error('Error fetching appointments:', error);
       toast.error(t('therapist.export-failed'));
     }
-  };
+  }, [router, selectedDate, t]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const session = await authClient.getSession();
+        if (session) {
+          setAuthenticated(true);
+          await fetchUserProfile();
+          await fetchAppointments();
+        } else {
+          router.push('/auth/sign-in');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.push('/auth/sign-in');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router, fetchUserProfile, fetchAppointments]);
 
   useEffect(() => {
     if (authenticated) {
       fetchAppointments();
     }
-  }, [selectedDate, authenticated]);
+  }, [selectedDate, authenticated, fetchAppointments]);
 
   const handleExport = async () => {
     try {
@@ -123,7 +123,7 @@ export default function TherapistDashboard() {
         document.body.removeChild(a);
         toast.success(t('therapist.export-success'));
       }
-    } catch (error) {
+    } catch {
       toast.error(t('therapist.export-failed'));
     }
   };

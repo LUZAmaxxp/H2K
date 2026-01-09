@@ -6,7 +6,7 @@ import { WaitingList, UserProfile, Appointment, Patient, Room, IAppointment } fr
 // DELETE /api/waiting-list/[id] - Remove from waiting list
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -30,7 +30,7 @@ export async function DELETE(
       );
     }
 
-    const waitingListEntry = await WaitingList.findById(params.id);
+    const waitingListEntry = await WaitingList.findById((await params).id);
     if (!waitingListEntry) {
       return NextResponse.json(
         { error: 'Waiting list entry not found' },
@@ -45,9 +45,8 @@ export async function DELETE(
         { error: 'Access denied' },
         { status: 403 }
       );
-    }
-
-    await WaitingList.findByIdAndDelete(params.id);
+    } // Add this closing brace
+    await WaitingList.findByIdAndDelete((await params).id);
 
     return NextResponse.json({ message: 'Removed from waiting list successfully' });
   } catch (error) {
@@ -62,7 +61,7 @@ export async function DELETE(
 // POST /api/waiting-list/[id]/promote - Move waiting list entry to appointment
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -87,7 +86,7 @@ export async function POST(
       );
     }
 
-    const waitingListEntry = await WaitingList.findById(params.id);
+    const waitingListEntry = await WaitingList.findById((await params).id);
     if (!waitingListEntry) {
       return NextResponse.json(
         { error: 'Waiting list entry not found' },
@@ -179,7 +178,7 @@ export async function POST(
     await patient.save();
 
     // Remove from waiting list
-    await WaitingList.findByIdAndDelete(params.id);
+    await WaitingList.findByIdAndDelete((await params).id);
 
     userProfile.totalAppointments += 1;
     await userProfile.save();

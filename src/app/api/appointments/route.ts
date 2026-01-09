@@ -59,16 +59,12 @@ export async function GET(request: NextRequest) {
 
     // Filter by date range if provided
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const end = new Date(endDate + 'T23:59:59.999Z');
       query.date = { $gte: start, $lte: end };
     } else if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      const startOfDay = new Date(date + 'T00:00:00.000Z');
+      const endOfDay = new Date(date + 'T23:59:59.999Z');
       query.date = { $gte: startOfDay, $lte: endOfDay };
     }
 
@@ -119,15 +115,18 @@ export async function POST(request: NextRequest) {
 
     // Get user profile
     const userProfile = await UserProfile.findOne({ userId: session.user.id });
-    const isTherapist = !!userProfile && (userProfile.role === 'therapist' || userProfile.roles?.includes('therapist'));
-    if (!userProfile || !isTherapist) {
+    const canCreateAppointments = !!userProfile && (
+      (userProfile.role === 'therapist' || userProfile.roles?.includes('therapist')) ||
+      (userProfile.role === 'admin' && userProfile.licenseNumber)
+    );
+    if (!userProfile || !canCreateAppointments) {
       return NextResponse.json(
-        { error: 'Only therapists can create appointments' },
+        { error: 'Only therapists and licensed admins can create appointments' },
         { status: 403 }
       );
     }
 
-    if (userProfile.status !== 'approved' && userProfile.status !== 'active') {
+    if (userProfile.status === 'rejected' || userProfile.status === 'inactive') {
       return NextResponse.json(
         { error: 'Your account is not approved yet' },
         { status: 403 }
@@ -157,7 +156,7 @@ export async function POST(request: NextRequest) {
     // Check availability
     const availabilityCheck = await checkAvailability({
       therapistId: userProfile.userId,
-      date: new Date(date),
+      date: new Date(date + 'T00:00:00.000Z'),
       time,
       duration,
       room
@@ -191,7 +190,7 @@ export async function POST(request: NextRequest) {
       patientId,
       patientName: `${patient.firstName} ${patient.lastName}`,
       patientPhone: patient.phoneNumber,
-      date: new Date(date),
+      date: new Date(date + 'T00:00:00.000Z'),
       time,
       duration,
       appointmentType,
@@ -236,15 +235,13 @@ async function checkAvailability(data: {
   room: string;
 }): Promise<{
   isAvailable: boolean;
-  conflictingAppointment?: any;
+  conflictingAppointment?: IAppointment;
   alternativeTimes?: string[];
   alternativeRooms?: string[];
 }> {
   // Check 1: Therapist's daily limit (max 12)
-  const startOfDay = new Date(data.date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(data.date);
-  endOfDay.setHours(23, 59, 59, 999);
+  const startOfDay = new Date(data.date.getTime());
+  const endOfDay = new Date(data.date.getTime() + 24 * 60 * 60 * 1000 - 1);
 
   const therapistDailyCount = await Appointment.countDocuments({
     therapistId: data.therapistId,
@@ -257,9 +254,8 @@ async function checkAvailability(data: {
   }
 
   // Check 2: Room availability at that time
-  const appointmentStart = new Date(data.date);
   const [hours, minutes] = data.time.split(':').map(Number);
-  appointmentStart.setHours(hours, minutes, 0, 0);
+  const appointmentStart = new Date(data.date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
   const appointmentEnd = new Date(appointmentStart.getTime() + data.duration * 60000);
 
   // Check room availability - simpler approach
@@ -273,9 +269,8 @@ async function checkAvailability(data: {
   });
 
   const roomConflict = allRoomAppointments.find(apt => {
-    const aptStart = new Date(apt.date);
     const [aptHours, aptMinutes] = apt.time.split(':').map(Number);
-    aptStart.setHours(aptHours, aptMinutes, 0, 0);
+    const aptStart = new Date(apt.date.getTime() + aptHours * 60 * 60 * 1000 + aptMinutes * 60 * 1000);
     const aptEnd = new Date(aptStart.getTime() + apt.duration * 60000);
 
     // Check for overlap
@@ -306,9 +301,8 @@ async function checkAvailability(data: {
   });
 
   const therapistConflict = therapistAppointments.find(apt => {
-    const aptStart = new Date(apt.date);
     const [aptHours, aptMinutes] = apt.time.split(':').map(Number);
-    aptStart.setHours(aptHours, aptMinutes, 0, 0);
+    const aptStart = new Date(apt.date.getTime() + aptHours * 60 * 60 * 1000 + aptMinutes * 60 * 1000);
     const aptEnd = new Date(aptStart.getTime() + apt.duration * 60000);
 
     return (bufferStart < aptEnd && bufferEnd > aptStart);
@@ -342,17 +336,15 @@ function suggestAlternativeTimes(data: { date: Date; time: string; duration: num
   return alternatives.slice(0, 3);
 }
 
-async function suggestAlternativeRooms(data: { date: Date; time: string; duration: number }): Promise<string[]> {
+async function suggestAlternativeRooms(data: { date: Date; time: string; duration: number; room: string }): Promise<string[]> {
   const { Room } = await import('@/lib/models');
   const rooms = await Room.find({ isActive: true });
   const availableRooms: string[] = [];
 
   for (const room of rooms) {
-    if (room.name === data.room) continue;    
-    const startOfDay = new Date(data.date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(data.date);
-    endOfDay.setHours(23, 59, 59, 999);
+    if (room.name === data.room) continue;
+    const startOfDay = new Date(data.date.getTime());
+    const endOfDay = new Date(data.date.getTime() + 24 * 60 * 60 * 1000 - 1);
 
     const conflicts = await Appointment.find({
       room: room.name,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { Appointment, UserProfile } from '@/lib/models';
+import { Appointment, UserProfile, IAppointment } from '@/lib/models';
 import { isAdminEmail, addAdminEmail, removeAdminEmail } from '@/lib/admin-config';
 
 interface UserDocument {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         const appointments = userProfile?.role === 'therapist'
           ? await Appointment.find({ therapistId: userId })
             .sort({ createdAt: -1 })
-            .lean()
+            .lean() as unknown as IAppointment[]
           : [];
 
         // Get last activity date
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
           appointmentsCount: appointments.length,
           totalAppointments: userProfile?.totalAppointments || 0,
           lastActivity: lastActivity,
-          appointments: appointments.map((apt: any) => ({
+          appointments: appointments.map((apt) => ({
             _id: String(apt._id),
             patientName: apt.patientName,
             date: apt.date,

@@ -5,11 +5,19 @@ import { useRouter } from "@/hooks/use-navigation";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, XCircle } from "lucide-react";
+import { Clock } from "lucide-react";
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  licenseNumber: string;
+  specialization: string;
+  status: string;
+}
 
 export default function PendingApprovalPage() {
   const router = useRouter();
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -83,7 +91,7 @@ export default function PendingApprovalPage() {
             </p>
             <ul className="mt-2 text-sm text-blue-700 space-y-1 list-disc list-inside">
               <li>An administrator will review your professional credentials</li>
-              <li>You'll receive an email notification once your account is approved</li>
+              <li>You&apos;ll receive an email notification once your account is approved</li>
               <li>This page will automatically update when your status changes</li>
             </ul>
           </div>

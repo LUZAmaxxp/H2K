@@ -487,8 +487,8 @@ export interface IAuditLog {
   action: 'role_change' | 'user_approval' | 'user_rejection' | 'appointment_created' | 'appointment_cancelled' | 'waiting_list_promoted';
   performedBy: string;
   targetUserId?: string;
-  oldValue?: any;
-  newValue?: any;
+  oldValue?: unknown;
+  newValue?: unknown;
   details?: string;
   ipAddress?: string;
   createdAt: Date;

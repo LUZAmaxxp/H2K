@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
-import { Appointment, UserProfile, WaitingList } from '@/lib/models';
+import { Appointment, UserProfile, WaitingList, IAppointment } from '@/lib/models';
 
 // GET /api/appointments/[id] - Get single appointment
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -30,7 +30,7 @@ export async function GET(
       );
     }
 
-    const appointment = await Appointment.findById(params.id)
+    const appointment = await Appointment.findById((await params).id)
       .populate('patientId');
 
     if (!appointment) {
@@ -62,7 +62,7 @@ export async function GET(
 // PUT /api/appointments/[id] - Update appointment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -86,7 +86,7 @@ export async function PUT(
       );
     }
 
-    const appointment = await Appointment.findById(params.id);
+    const appointment = await Appointment.findById((await params).id);
     if (!appointment) {
       return NextResponse.json(
         { error: 'Appointment not found' },
@@ -149,7 +149,7 @@ export async function PUT(
 // DELETE /api/appointments/[id] - Delete appointment
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -173,7 +173,7 @@ export async function DELETE(
       );
     }
 
-    const appointment = await Appointment.findById(params.id);
+    const appointment = await Appointment.findById((await params).id);
     if (!appointment) {
       return NextResponse.json(
         { error: 'Appointment not found' },
@@ -199,7 +199,7 @@ export async function DELETE(
       );
     }
 
-    await Appointment.findByIdAndDelete(params.id);
+    await Appointment.findByIdAndDelete((await params).id);
 
     // Handle waiting list replacement
     await handleWaitingListReplacement(appointment);
@@ -215,7 +215,7 @@ export async function DELETE(
 }
 
 // Auto-replacement logic for waiting list
-async function handleWaitingListReplacement(appointment: any) {
+async function handleWaitingListReplacement(appointment: IAppointment) {
   try {
     // Find waiting list entries for the same therapist and date
     const waitingListEntries = await WaitingList.find({

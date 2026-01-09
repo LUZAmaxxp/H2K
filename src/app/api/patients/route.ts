@@ -149,9 +149,9 @@ export async function POST(request: NextRequest) {
     await patient.save();
 
     return NextResponse.json(patient, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating patient:', error);
-    if (error.code === 11000) {
+    if ((error as { code: number }).code === 11000) {
       return NextResponse.json(
         { error: 'Patient with this medical record number already exists' },
         { status: 409 }

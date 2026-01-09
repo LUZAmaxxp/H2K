@@ -2,9 +2,9 @@
 
 
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { authClient } from '@/lib/auth-client';
 
@@ -29,28 +29,26 @@ import { useTranslation } from '@/lib/i18n-context';
 
 
 interface Patient {
-
   _id: string;
-
   medicalRecordNumber: string;
-
   firstName: string;
-
   lastName: string;
-
   phoneNumber: string;
-
   dateOfBirth: string;
-
 }
+
+const appointmentTypeDurations: Record<string, number> = {
+  'initial-assessment': 60,
+  'follow-up': 45,
+  'rehabilitation': 30,
+  'post-operative': 60
+};
 
 
 
 export default function NewAppointmentPage() {
 
   const router = useRouter();
-
-  const searchParams = useSearchParams();
 
   const { t } = useTranslation();
 
@@ -78,9 +76,9 @@ export default function NewAppointmentPage() {
 
   const [formData, setFormData] = useState({
 
-    date: searchParams.get('date') || new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0],
 
-    time: searchParams.get('time') || '08:00',
+    time: '08:00',
 
     duration: 45,
 
@@ -93,6 +91,20 @@ export default function NewAppointmentPage() {
     specialRequirements: ''
 
   });
+
+
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const currentSearchParams = new URLSearchParams(window.location.search);
+      setFormData(prev => ({
+        ...prev,
+        date: currentSearchParams.get('date') || prev.date,
+        time: currentSearchParams.get('time') || prev.time,
+      }));
+    }
+  }, []);
+  
 
 
 
@@ -134,11 +146,13 @@ export default function NewAppointmentPage() {
 
         }
 
-      } catch (error) {
+    } catch (error) {
 
-        router.push('/auth/sign-in');
+      console.error('Auth check failed:', error);
 
-      }
+      router.push('/auth/sign-in');
+
+    }
 
     };
 
@@ -148,7 +162,7 @@ export default function NewAppointmentPage() {
 
 
 
-  const searchPatients = async () => {
+  const searchPatients = useCallback(async () => {
 
     if (!searchQuery.trim()) {
 
@@ -178,7 +192,7 @@ export default function NewAppointmentPage() {
 
     }
 
-  };
+  }, [searchQuery]);
 
 
 
@@ -194,7 +208,7 @@ export default function NewAppointmentPage() {
 
     return () => clearTimeout(debounceTimer);
 
-  }, [searchQuery]);
+  }, [searchQuery, searchPatients]);
 
 
 
@@ -235,6 +249,8 @@ export default function NewAppointmentPage() {
       }
 
     } catch (error) {
+
+      console.error('Error creating patient:', error);
 
       toast.error(t('admin.appointments.failed-create-patient'));
 
@@ -279,6 +295,8 @@ export default function NewAppointmentPage() {
       }
 
     } catch (error) {
+
+      console.error('Error checking availability:', error);
 
       toast.error(t('admin.appointments.failed-check-availability'));
 
@@ -352,6 +370,8 @@ export default function NewAppointmentPage() {
 
     } catch (error) {
 
+      console.error('Error creating appointment:', error);
+
       toast.error(t('admin.appointments.failed-create-appointment'));
 
     } finally {
@@ -359,20 +379,6 @@ export default function NewAppointmentPage() {
       setLoading(false);
 
     }
-
-  };
-
-
-
-  const appointmentTypeDurations: Record<string, number> = {
-
-    'initial-assessment': 60,
-
-    'follow-up': 45,
-
-    'rehabilitation': 30,
-
-    'post-operative': 60
 
   };
 
@@ -448,8 +454,8 @@ export default function NewAppointmentPage() {
 
 
 
-      <div className="max-w-5xl mx-auto relative z-10">
-
+          <Suspense fallback={<div>Loading...</div>}>
+              <div className="max-w-5xl mx-auto relative z-10">
         <Button
 
           variant="ghost"
@@ -562,7 +568,7 @@ export default function NewAppointmentPage() {
 
             <CardDescription className="text-gray-600">
 
-              {t('admin.appointments.step-indicator', { step, title: getStepTitle(step) })}
+              {t('admin.appointments.step-indicator', { step: String(step), title: getStepTitle(step) })}
 
             </CardDescription>
 
@@ -992,9 +998,9 @@ export default function NewAppointmentPage() {
 
                       type="number"
 
-                      value={formData.duration}
+                      value={formData.duration.toString()}
 
-                      onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 45 })}
 
                       min={30}
 
@@ -1310,6 +1316,7 @@ export default function NewAppointmentPage() {
           </CardContent>
         </Card>
       </div>
+    </Suspense>
     </div>
   );
 }

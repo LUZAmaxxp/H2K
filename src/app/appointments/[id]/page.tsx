@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -38,7 +38,7 @@ interface Appointment {
   medicalNotes?: string;
   specialRequirements?: string;
   therapistId: string;
-  patientId: any;
+  patientId: string;
 }
 
 export default function AppointmentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +50,25 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
   const [status, setStatus] = useState<string>('');
   const [medicalNotes, setMedicalNotes] = useState('');
   const [specialRequirements, setSpecialRequirements] = useState('');
+
+  const fetchAppointment = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAppointment(data);
+        setStatus(data.status);
+        setMedicalNotes(data.medicalNotes || '');
+        setSpecialRequirements(data.specialRequirements || '');
+      } else {
+        toast.error(t('admin.appointments.not-found'));
+        router.push('/dashboard/therapist');
+      }
+    } catch (error) {
+      console.error('Error fetching appointment:', error);
+      toast.error(t('admin.appointments.not-found'));
+    }
+  }, [router, t]);
 
   useEffect(() => {
     const init = async () => {
@@ -71,26 +90,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
     };
 
     init();
-  }, [params, router]);
-
-  const fetchAppointment = async (id: string) => {
-    try {
-      const response = await fetch(`/api/appointments/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAppointment(data);
-        setStatus(data.status);
-        setMedicalNotes(data.medicalNotes || '');
-        setSpecialRequirements(data.specialRequirements || '');
-      } else {
-        toast.error(t('admin.appointments.not-found'));
-        router.push('/dashboard/therapist');
-      }
-    } catch (error) {
-      console.error('Error fetching appointment:', error);
-      toast.error(t('admin.appointments.not-found'));
-    }
-  };
+  }, [params, router, fetchAppointment, t]);
 
   const handleUpdate = async () => {
     if (!appointment) return;

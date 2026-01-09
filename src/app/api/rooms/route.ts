@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
     await room.save();
 
     return NextResponse.json(room, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating room:', error);
-    if (error.code === 11000) {
+    if ((error as { code: number }).code === 11000) {
       return NextResponse.json(
         { error: 'Room with this name already exists' },
         { status: 409 }

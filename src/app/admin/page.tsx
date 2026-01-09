@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Shield, AlertCircle, Trash2, Users, LogOut, Settings, User, Calendar, BarChart, Home } from 'lucide-react';
+import { Shield, AlertCircle, Users, LogOut, Settings, User, Calendar, BarChart, Home } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AdminTable from '@/components/admin-table';
 import SidebarMenu from '@/components/sidebar-menu';
@@ -19,6 +18,7 @@ interface UserData {
   _id: string;
   email: string;
   name: string;
+  role: string;
   emailVerified: boolean;
   createdAt: string;
   interventionsCount: number;
@@ -29,17 +29,24 @@ interface UserData {
   reclamations: Record<string, unknown>[];
 }
 
+interface Appointment {
+  _id: string;
+  therapistName?: string;
+  patientName?: string;
+  date?: string;
+  time?: string;
+  appointmentType?: string;
+  status?: string;
+}
+
 export default function AdminPage() {
   const { t } = useTranslation();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [authorized, setAuthorized] = useState(false);
-  const [activeSection, setActiveSection] = useState<'overview' | 'appointements' | 'analytics' | 'settings' | 'admin'>('admin');
-  const [currentView, setCurrentView] = useState<'users' | 'interventions' | 'reclamations'>('users');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<{ id: string; type: 'interventions' | 'reclamations' } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [activeSection, setActiveSection] = useState<'overview' | 'appointements' | 'analytics' | 'settings' | 'admin' | 'users'>('admin');
+  const [currentView, setCurrentView] = useState<'users' | 'appointements'>('users');
   const [selectedTherapistId, setSelectedTherapistId] = useState<string>('');
   const [selectedWeekStart, setSelectedWeekStart] = useState<string>(() => {
     const today = new Date();
@@ -49,7 +56,7 @@ export default function AdminPage() {
     monday.setDate(today.getDate() + diff);
     return monday.toISOString().split('T')[0];
   });
-  const [allAppointments, setAllAppointments] = useState<any[]>([]);
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -141,36 +148,9 @@ export default function AdminPage() {
     }
   }, [authenticated, authorized, selectedWeekStart, selectedTherapistId]);
 
-  const handleDeleteRecord = useCallback((id: string, type: 'interventions' | 'reclamations') => {
-    setRecordToDelete({ id, type });
-    setDeleteDialogOpen(true);
-  }, []);
 
-  const confirmDeleteRecord = useCallback(async () => {
-    if (!recordToDelete) return;
 
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/${recordToDelete.type}/${recordToDelete.id}`, {
-        method: 'DELETE',
-      });
 
-      if (response.ok) {
-        toast.success(t('admin.delete-success'));
-        // Refresh the records
-        fetchAllRecords();
-      } else {
-        toast.error(t('admin.delete-error'));
-      }
-    } catch (error) {
-      console.error('Error deleting record:', error);
-      toast.error(t('admin.delete-error'));
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-      setRecordToDelete(null);
-    }
-  }, [recordToDelete, t, fetchAllRecords]);
 
   useEffect(() => {
     if (authenticated && authorized) {
@@ -179,7 +159,7 @@ export default function AdminPage() {
   }, [authenticated, authorized, fetchAdminData]);
 
   useEffect(() => {
-    if (authenticated && authorized && currentView === 'appointments') {
+    if (authenticated && authorized && currentView === 'appointements') {
       fetchAllAppointments();
     }
   }, [authenticated, authorized, currentView, selectedWeekStart, selectedTherapistId, fetchAllAppointments]);
@@ -251,8 +231,8 @@ export default function AdminPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setCurrentView('appointments');
-                  setActiveSection('appointments');
+                  setCurrentView('appointements');
+                  setActiveSection('appointements');
                   fetchAllAppointments();
                 }}
               >
@@ -262,7 +242,7 @@ export default function AdminPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setCurrentView('appointments');
+                  setCurrentView('appointements');
                   setActiveSection('analytics');
                 }}
               >
@@ -320,37 +300,20 @@ export default function AdminPage() {
                 {t('admin.users')}
               </Button>
               <Button
-                variant={currentView === 'appointments' ? 'default' : 'outline'}
+                variant={currentView === 'appointements' ? 'default' : 'outline'}
                 onClick={() => {
-                  setCurrentView('appointments');
+                  setCurrentView('appointements');
                   fetchAllAppointments();
                 }}
               >
                 All Appointments
               </Button>
-              <Button
-                variant={currentView === 'interventions' ? 'default' : 'outline'}
-                onClick={() => {
-                  setCurrentView('interventions');
-                  fetchAllRecords();
-                }}
-              >
-                {t('admin.all-interventions')}
-              </Button>
-              <Button
-                variant={currentView === 'reclamations' ? 'default' : 'outline'}
-                onClick={() => {
-                  setCurrentView('reclamations');
-                  fetchAllRecords();
-                }}
-              >
-                {t('admin.all-reclamations')}
-              </Button>
+
             </div>
           </div>
 
           {currentView === 'users' && <AdminTable users={users} />}
-          {currentView === 'appointments' && (
+          {currentView === 'appointements' && (
             <Card>
               <CardHeader>
                 <CardTitle>Weekly Appointments ({allAppointments.length})</CardTitle>
@@ -520,53 +483,11 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           )}
-          {currentView === 'interventions' && (
-            <AdminRecordsTable
-              records={allInterventions}
-              type="interventions"
-              onDelete={handleDeleteRecord}
-            />
-          )}
-          {currentView === 'reclamations' && (
-            <AdminRecordsTable
-              records={allReclamations}
-              type="reclamations"
-              onDelete={handleDeleteRecord}
-            />
-          )}
+        
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-red-500" />
-              {t('admin.confirm-delete')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('admin.confirm-delete-message')}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
-              {t('admin.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDeleteRecord}
-              disabled={isDeleting}
-            >
-              {isDeleting ? t('admin.deleting') : t('admin.delete')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       <Toaster />
     </div>

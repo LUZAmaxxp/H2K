@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/auth_next';
+let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/auth_next';
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+  MONGODB_URI = 'mongodb://localhost:27017/auth_next';
 }
 
 /**

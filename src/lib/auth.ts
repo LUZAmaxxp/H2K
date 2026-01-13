@@ -7,7 +7,13 @@ const client = new MongoClient(process.env.MONGODB_URI || "mongodb://localhost:2
 const db = client.db();
 export const auth = betterAuth({
   plugins: [
-
+    organization({
+      teams: {
+        enabled: true,
+        maximumTeams: 10,
+        allowRemovingAllTeams: false,
+      },
+    }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         // Use nodemailer to send the magic link email

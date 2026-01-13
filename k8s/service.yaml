@@ -8,4 +8,4 @@ spec:
   ports:
   - port: 3000
     targetPort: 3000
-  type: ClusterIP  # Use LoadBalancer or NodePort if external access needed
+  type: ClusterIP   Use LoadBalancer or NodePort if external access needed

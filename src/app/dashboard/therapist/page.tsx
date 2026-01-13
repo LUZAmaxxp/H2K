@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -155,24 +155,27 @@ export default function TherapistDashboard() {
   };
 
   // Generate time slots (8:00 AM - 8:00 PM, hourly)
-  const timeSlots = [];
-  for (let hour = 8; hour < 20; hour++) {
-    timeSlots.push(`${String(hour).padStart(2, '0')}:00`);
-  }
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 8; hour < 20; hour++) {
+      slots.push(`${String(hour).padStart(2, '0')}:00`);
+    }
+    return slots;
+  }, []);
 
   // Get appointment for a specific time slot
-  const getAppointmentForSlot = (time: string) => {
+  const getAppointmentForSlot = useCallback((time: string) => {
     return appointments.find(apt => apt.time === time);
-  };
+  }, [appointments]);
 
   // Count appointments by status
-  const stats = {
+  const stats = useMemo(() => ({
     total: appointments.length,
     completed: appointments.filter(a => a.status === 'completed').length,
     pending: appointments.filter(a => a.status === 'pending').length,
     noShow: appointments.filter(a => a.status === 'no-show').length,
     cancelled: appointments.filter(a => a.status === 'cancelled').length,
-  };
+  }), [appointments]);
 
   if (loading || !authenticated) {
     return (

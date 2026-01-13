@@ -2,10 +2,9 @@ name: Build and Deploy to Vercel
 
 on:
   push:
-    branches:
-       branches: [ main, develop , ayman]
+    branches: [ main, develop , ayman]
   pull_request:
-      branches: [ main, develop , ayman]
+    branches: [ main, develop , ayman]
 
 jobs:
   build-and-deploy:

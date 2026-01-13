@@ -378,13 +378,33 @@ const UserSettingsSchema = new mongoose.Schema({
   }
 });
 
-// Create indexes for performance
+
 AppointmentSchema.index({ therapistId: 1, date: 1 });
 AppointmentSchema.index({ date: 1, time: 1, room: 1 });
 AppointmentSchema.index({ patientId: 1 });
+AppointmentSchema.index({ status: 1 });
+AppointmentSchema.index({ therapistId: 1, status: 1 });
+AppointmentSchema.index({ patientId: 1, date: -1 }); 
+AppointmentSchema.index({ date: 1, status: 1 }); 
+
 WaitingListSchema.index({ therapistId: 1, desiredDate: 1, priorityNumber: 1 });
+WaitingListSchema.index({ patientId: 1 });
+WaitingListSchema.index({ priorityNumber: 1 });
+
 // Note: medicalRecordNumber index is already defined in schema above, don't duplicate
 PatientSchema.index({ phoneNumber: 1 });
+PatientSchema.index({ primaryTherapist: 1 });
+PatientSchema.index({ firstName: 1, lastName: 1 });
+
+UserProfileSchema.index({ email: 1 }, { unique: true });
+UserProfileSchema.index({ role: 1, status: 1 });
+UserProfileSchema.index({ userId: 1 }, { unique: true });
+
+RoomSchema.index({ isActive: 1 });
+
+AuditLogSchema.index({ action: 1, createdAt: -1 });
+AuditLogSchema.index({ performedBy: 1, createdAt: -1 });
+AuditLogSchema.index({ targetUserId: 1, createdAt: -1 });
 
 // Create models if they don't exist
 export const UserProfile = mongoose.models.UserProfile || mongoose.model('UserProfile', UserProfileSchema);
